@@ -1,0 +1,32 @@
+# Entorno Virtual
+.venv/
+venv/
+env/
+ENV/
+
+# Archivos compilados de Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Configuración de Django y Secretos
+.env
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Archivos de registro (Logs)
+*.log
+
+# Archivos estáticos y medios (opcional, según tu flujo)
+static_cdn/
+media/
+
+# Archivos del IDE (VS Code, PyCharm)
+.vscode/
+.idea/
+
+# Reportes de tests y cobertura
+.coverage
+htmlcov/
+.pytest_cache/
