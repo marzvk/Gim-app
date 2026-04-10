@@ -30,3 +30,6 @@ media/
 .coverage
 htmlcov/
 .pytest_cache/
+
+
+tree.txt
