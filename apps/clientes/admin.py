@@ -15,3 +15,13 @@ class ClienteAdmin(admin.ModelAdmin):
     ]
 
     list_filter = ["activo", "turno", "plan", "estado_consulta"]
+
+    search_fields = ["nombre", "apellido", "telefono", "email"]
+
+    readonly_fields = ["fecha_alta", "usuario_creador"]
+
+    #
+    def save_model(self, request, obj, form, change):
+        if not change:  # Solo cuando se crea (no cuando se edita)
+            obj.usuario_creador = request.user
+        super().save_model(request, obj, form, change)
