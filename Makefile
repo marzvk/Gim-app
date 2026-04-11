@@ -10,8 +10,7 @@ help:
 	@echo "  make freeze     - Actualizar el archivo requirements.txt"
 	@echo "  make shell      - Entrar a la shell de Django"
 	@echo "  make tree       - Genera archivo txt con el arbol del project"
-	@echo "  make .env       - Abre entorno virtual en fish terminal"
-
+	
 run:
 	$(MANAGE) runserver
 
@@ -28,6 +27,3 @@ shell:
 	$(MANAGE) shell
 tree:
 	tree > tree.txt
-
-.env:
-	source /home/pan/Escritorio/Gim-App/.venv/bin/activate.fish
