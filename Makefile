@@ -10,7 +10,8 @@ help:
 	@echo "  make freeze     - Actualizar el archivo requirements.txt"
 	@echo "  make shell      - Entrar a la shell de Django"
 	@echo "  make tree       - Genera archivo txt con el arbol del project"
-	
+	@echo "  make test       - Arranca tests "
+
 run:
 	$(MANAGE) runserver
 
@@ -27,3 +28,5 @@ shell:
 	$(MANAGE) shell
 tree:
 	tree > tree.txt
+test:
+	$(MANAGE) test
