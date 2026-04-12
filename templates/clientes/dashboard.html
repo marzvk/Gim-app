@@ -6,11 +6,12 @@
 <div class="container-fluid">
     
     <!-- TABS DE TURNOS -->
-    <ul class="nav nav-tabs mb-4" role="tablist">
+    <ul class="nav nav-tabs mb-4" role="tablist" id="tabs-turnos">
         {% for turno in turnos %}
         <li class="nav-item" role="presentation">
             <a class="nav-link {% if turno == turno_actual %}active{% endif %}" 
                href="?turno={{ turno.id }}"
+               data-turno-id="{{ turno.id }}"
                hx-get="?turno={{ turno.id }}"
                hx-target="#clientes-container">
                 {{ turno.nombre }}
@@ -19,10 +20,108 @@
         {% endfor %}
     </ul>
 
-    <!-- CONTENEDOR DE CLIENTES (se actualiza con HTMX) -->
+    <!-- FORMULARIO DE BÚSQUEDA Y FILTROS -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <form id="form-filtros">
+                <input type="hidden" id="turno-hidden" name="turno" value="{{ turno_actual.id|default:'' }}">
+                
+                <div class="row g-3">
+                    <!-- Campo de búsqueda -->
+                    <div class="col-md-6">
+                        <label for="id_busqueda" class="form-label">Buscar cliente</label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="id_busqueda"
+                               name="busqueda" 
+                               placeholder="Nombre o apellido..."
+                               value="{{ busqueda }}">
+                        <small class="form-text text-muted">Busca en nombre y apellido</small>
+                    </div>
+                    
+                    <!-- Filtro por estado -->
+                    <div class="col-md-3">
+                        <label for="id_estado" class="form-label">Filtrar por estado</label>
+                        <select class="form-select" id="id_estado" name="estado">
+                            <option value="">Todos</option>
+                            <option value="al_dia" {% if filtro_estado == 'al_dia' %}selected{% endif %}>✅ Al día</option>
+                            <option value="vencido" {% if filtro_estado == 'vencido' %}selected{% endif %}>❌ Vencido</option>
+                            <option value="pendiente" {% if filtro_estado == 'pendiente' %}selected{% endif %}>⚠️ Pendiente</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Botón limpiar -->
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button type="button" id="btn-limpiar" class="btn btn-outline-secondary w-100">
+                            🔄 Limpiar filtros
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- CONTENEDOR DE CLIENTES -->
     <div id="clientes-container">
         {% include 'clientes/_tabla_clientes.html' %}
     </div>
 
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const formFiltros = document.getElementById('form-filtros');
+    const turnoHidden = document.getElementById('turno-hidden');
+    const inputBusqueda = document.getElementById('id_busqueda');
+    const selectEstado = document.getElementById('id_estado');
+    const btnLimpiar = document.getElementById('btn-limpiar');
+    const container = document.getElementById('clientes-container');
+    
+    let timeoutBusqueda;
+    
+    // Actualizar turno hidden cuando se hace click en tab
+    document.getElementById('tabs-turnos').addEventListener('click', function(e) {
+        if (e.target.tagName === 'A' && e.target.dataset.turnoId) {
+            turnoHidden.value = e.target.dataset.turnoId;
+        }
+    });
+    
+    // Búsqueda con delay
+    inputBusqueda.addEventListener('input', function() {
+        clearTimeout(timeoutBusqueda);
+        timeoutBusqueda = setTimeout(function() {
+            aplicarFiltros();
+        }, 300);
+    });
+    
+    // Estado sin delay
+    selectEstado.addEventListener('change', function() {
+        aplicarFiltros();
+    });
+    
+    // Limpiar filtros
+    btnLimpiar.addEventListener('click', function() {
+        inputBusqueda.value = '';
+        selectEstado.value = '';
+        aplicarFiltros();
+    });
+    
+    function aplicarFiltros() {
+        const formData = new FormData(formFiltros);
+        const params = new URLSearchParams(formData);
+        
+        fetch('?' + params.toString(), {
+            headers: {
+                'HX-Request': 'true'
+            }
+        })
+        .then(response => response.text())
+        .then(html => {
+            container.innerHTML = html;
+        });
+    }
+});
+</script>
 {% endblock %}

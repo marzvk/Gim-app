@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from .models import Cliente
 from apps.clientes.services import obtener_turno_actual, calcular_estado_cliente
+from django.db.models import Q
 
 
 @login_required
@@ -28,22 +29,51 @@ def dashboard(request):
         # Detectar turno automáticamente según la hora
         turno_actual = obtener_turno_actual()
 
-    # Obtener clientes del turno actual
-    clientes = []
-    if turno_actual:
-        clientes_qs = Cliente.objects.filter(
-            turno=turno_actual, activo=True
-        ).select_related("turno", "usuario_creador")
+    # Obtener parámetros de búsqueda y filtro
+    busqueda = request.GET.get("busqueda", "").strip()
+    filtro_estado = request.GET.get("estado", "")
 
-        # Calcular estado de cada cliente
-        for cliente in clientes_qs:
-            cliente.estado_actual = calcular_estado_cliente(cliente)
-            clientes.append(cliente)
+    # Query base: clientes del turno actual
+    clientes_qs = Cliente.objects.filter(activo=True)
+
+    # Filtrar por turno
+    if turno_actual:
+        clientes_qs = clientes_qs.filter(turno=turno_actual)
+
+    # Aplicar búsqueda (nombre O apellido)
+    if busqueda:
+        clientes_qs = clientes_qs.filter(
+            Q(nombre__icontains=busqueda) | Q(apellido__icontains=busqueda)
+        )
+
+    # Optimización: traer relaciones en una query
+    clientes_qs = clientes_qs.select_related("turno", "usuario_creador")
+
+    # Calcular estado y aplicar filtro de estado
+    clientes = []
+    for cliente in clientes_qs:
+        cliente.estado_actual = calcular_estado_cliente(cliente)
+
+        # Filtrar por estado si se seleccionó uno
+        if filtro_estado:
+            if filtro_estado == "al_dia" and cliente.estado_actual != "al_dia":
+                continue
+            elif filtro_estado == "vencido" and cliente.estado_actual != "vencido":
+                continue
+            elif (
+                filtro_estado == "pendiente"
+                and cliente.estado_actual != "pendiente_consulta"
+            ):
+                continue
+
+        clientes.append(cliente)
 
     context = {
         "turnos": turnos,
         "turno_actual": turno_actual,
         "clientes": clientes,
+        "busqueda": busqueda,
+        "filtro_estado": filtro_estado,
     }
 
     # Si es request HTMX, devolver solo el partial
