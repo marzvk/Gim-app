@@ -8,7 +8,8 @@ from apps.clientes.services import obtener_turno_actual, calcular_estado_cliente
 def dashboard(request):
     """
     Vista principal del dashboard.
-    Muestra clientes filtrados por turno.
+    Si es request HTMX, devuelve solo el partial.
+    Si es request normal, devuelve página completa.
     """
     # Obtener todos los turnos activos
     from apps.usuarios.models import Turno
@@ -44,4 +45,10 @@ def dashboard(request):
         "turno_actual": turno_actual,
         "clientes": clientes,
     }
+
+    # Si es request HTMX, devolver solo el partial
+    if request.headers.get("HX-Request"):
+        return render(request, "clientes/_tabla_clientes.html", context)
+
+    # Si es request normal, devolver página completa
     return render(request, "clientes/dashboard.html", context)

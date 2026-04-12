@@ -12,8 +12,7 @@
             <a class="nav-link {% if turno == turno_actual %}active{% endif %}" 
                href="?turno={{ turno.id }}"
                hx-get="?turno={{ turno.id }}"
-               hx-target="#clientes-container"
-               hx-swap="innerHTML">
+               hx-target="#clientes-container">
                 {{ turno.nombre }}
             </a>
         </li>
