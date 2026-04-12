@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Gimnasio{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>Dashboard</h2>
+    <p>Bienvenido {{ user.username }}</p>
+    <p>Tu turno asignado: {{ user.turno_asignado|default:"Sin turno" }}</p>
+</div>
+{% endblock %}
