@@ -3,9 +3,27 @@
 {% block title %}Dashboard - Gimnasio{% endblock %}
 
 {% block content %}
-<div class="container">
-    <h2>Dashboard</h2>
-    <p>Bienvenido {{ user.username }}</p>
-    <p>Tu turno asignado: {{ user.turno_asignado|default:"Sin turno" }}</p>
+<div class="container-fluid">
+    
+    <!-- TABS DE TURNOS -->
+    <ul class="nav nav-tabs mb-4" role="tablist">
+        {% for turno in turnos %}
+        <li class="nav-item" role="presentation">
+            <a class="nav-link {% if turno == turno_actual %}active{% endif %}" 
+               href="?turno={{ turno.id }}"
+               hx-get="?turno={{ turno.id }}"
+               hx-target="#clientes-container"
+               hx-swap="innerHTML">
+                {{ turno.nombre }}
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
+
+    <!-- CONTENEDOR DE CLIENTES (se actualiza con HTMX) -->
+    <div id="clientes-container">
+        {% include 'clientes/_tabla_clientes.html' %}
+    </div>
+
 </div>
 {% endblock %}
