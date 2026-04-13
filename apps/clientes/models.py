@@ -106,6 +106,20 @@ class Cliente(models.Model):
         help_text="Quien dio de alta al cliente",
     )
 
+    # Plan contratado
+    plan = models.CharField(
+        max_length=20, choices=PLAN_CHOICES, help_text="Plan contratado por el cliente"
+    )
+
+    plan_nuevo = models.ForeignKey(
+        "Plan",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="clientes_nuevo",
+        help_text="Plan nuevo (FK) - temporal para migración",
+    )
+
     class Meta:
         verbose_name = "Cliente"
         verbose_name_plural = "Clientes"

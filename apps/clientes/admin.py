@@ -1,5 +1,12 @@
 from django.contrib import admin
-from .models import Cliente
+from .models import Cliente, Plan
+
+
+@admin.register(Plan)
+class PlanAdmin(admin.ModelAdmin):
+    list_display = ["nombre", "codigo", "precio", "activo", "orden"]
+    list_editable = ["precio", "activo", "orden"]
+    list_filter = ["activo"]
 
 
 @admin.register(Cliente)
