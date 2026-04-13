@@ -44,8 +44,6 @@ def modal_registrar_pago(request, cliente_id):
             except ValueError:
                 messages.error(request, "Monto invalido")
 
-        ctx = {
-            "cliente": cliente,
-        }
+    ctx = {"cliente": cliente, "today": date.today()}
 
-        return render(request, "pagos/_modal_pago.html", ctx)
+    return render(request, "pagos/_modal_pago.html", ctx)

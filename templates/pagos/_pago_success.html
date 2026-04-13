@@ -1,0 +1,11 @@
+<!-- Cierra modal y recarga tabla -->
+<script>
+    // Cerrar modal
+    document.getElementById('modal-container').innerHTML = '';
+    
+    // Recargar tabla de clientes
+    htmx.ajax('GET', window.location.search || '/', {
+        target: '#clientes-container',
+        swap: 'innerHTML'
+    });
+</script>
