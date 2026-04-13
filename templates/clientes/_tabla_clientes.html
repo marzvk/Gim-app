@@ -44,7 +44,9 @@
                     {% endif %}
                 </td>
                 <td>
-                    <button class="btn btn-sm btn-primary">
+                    <button class="btn btn-sm btn-primary"
+                            hx-get="{% url 'modal_pago' cliente.id %}"
+                            hx-target="#modal-container">
                         💰 Pago
                     </button>
                 </td>
