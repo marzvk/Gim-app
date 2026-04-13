@@ -4,10 +4,8 @@
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title">💰 Registrar Pago</h5>
-                <button type="button" class="btn-close btn-close-white" 
-                        hx-get="" 
-                        hx-target="#modal-container"
-                        hx-swap="innerHTML"></button>
+                    <button type="button" class="btn-close btn-close-white close-modal"></button>
+
             </div>
             
             <form hx-post="{% url 'modal_pago' cliente.id %}" 
@@ -21,14 +19,6 @@
                         <strong>Plan:</strong> {{ cliente.get_plan_display }}
                     </div>
                     
-                    <!-- Mensajes de error -->
-                    {% if messages %}
-                    <div class="alert alert-danger">
-                        {% for message in messages %}
-                        {{ message }}
-                        {% endfor %}
-                    </div>
-                    {% endif %}
                     
                     <!-- Monto -->
                     <div class="mb-3">
@@ -64,12 +54,8 @@
                     </div>
                 </div>
                 
-                <div class="modal-footer">
-                    <button type="button" 
-                            class="btn btn-secondary"
-                            hx-get=""
-                            hx-target="#modal-container"
-                            hx-swap="innerHTML">
+                <div class="modal-footer">                   
+                    <button type="button" class="btn btn-secondary close-modal">
                         Cancelar
                     </button>
                     <button type="submit" class="btn btn-primary">
@@ -83,3 +69,11 @@
 
 <!-- Backdrop oscuro -->
 <div class="modal-backdrop fade show"></div>
+
+<script>
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('close-modal')) {
+        document.getElementById('modal-container').innerHTML = '';
+    }
+});
+</script>

@@ -9,11 +9,12 @@
     <ul class="nav nav-tabs mb-4" role="tablist" id="tabs-turnos">
         {% for turno in turnos %}
         <li class="nav-item" role="presentation">
-            <a class="nav-link {% if turno == turno_actual %}active{% endif %}" 
+            <a class="nav-link {% if turno == turno_actual %}active fw-bold{% endif %}" 
                href="?turno={{ turno.id }}"
                data-turno-id="{{ turno.id }}"
                hx-get="?turno={{ turno.id }}"
-               hx-target="#clientes-container">
+               hx-target="#clientes-container"
+               onclick="marcarTabActivo(this)">
                 {{ turno.nombre }}
             </a>
         </li>
@@ -126,5 +127,17 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+function marcarTabActivo(elemento) {
+    // Quitar active de todos
+    document.querySelectorAll('#tabs-turnos .nav-link').forEach(function(link) {
+        link.classList.remove('active', 'fw-bold');
+    });
+    // Agregar active al clickeado
+    elemento.classList.add('active', 'fw-bold');
+    
+    // Actualizar turno hidden
+    turnoHidden.value = elemento.dataset.turnoId;
+}
+
 </script>
 {% endblock %}
