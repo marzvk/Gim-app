@@ -72,5 +72,5 @@ def obtener_turno_actual():
         if turno.hora_inicio <= hora_actual < turno.hora_fin:
             return turno
 
-    # Si no encontró ninguno, devolver el último turno activo (caso borde)
-    return turnos.last() if turnos.exists() else None
+    # Si no encontró , none
+    return None

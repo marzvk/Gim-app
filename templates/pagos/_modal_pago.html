@@ -1,0 +1,79 @@
+<!-- Modal de registro de pago -->
+<div class="modal fade show" id="modalPago" tabindex="-1" style="display: block;" aria-modal="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">💰 Registrar Pago</h5>
+                    <button type="button" class="btn-close btn-close-white close-modal"></button>
+
+            </div>
+            
+            <form hx-post="{% url 'modal_pago' cliente.id %}" 
+                  hx-target="#modal-container">
+                {% csrf_token %}
+                
+                <div class="modal-body">
+                    <!-- Info del cliente -->
+                    <div class="alert alert-info">
+                        <strong>Cliente:</strong> {{ cliente.apellido }}, {{ cliente.nombre }}<br>
+                        <strong>Plan:</strong> {{ cliente.get_plan_display }}
+                    </div>
+                    
+                    
+                    <!-- Monto -->
+                    <div class="mb-3">
+                        <label for="id_monto" class="form-label">Monto *</label>
+                        <input type="number" 
+                               class="form-control" 
+                               id="id_monto"
+                               name="monto" 
+                               step="0.01"
+                               required
+                               autofocus>
+                    </div>
+                    
+                    <!-- Fecha de pago -->
+                    <div class="mb-3">
+                        <label for="id_fecha_pago" class="form-label">Fecha de pago</label>
+                        <input type="date" 
+                               class="form-control" 
+                               id="id_fecha_pago"
+                               name="fecha_pago"
+                               value="{{ today|date:'Y-m-d' }}">
+                        <small class="form-text text-muted">Por defecto: hoy</small>
+                    </div>
+                    
+                    <!-- Observaciones -->
+                    <div class="mb-3">
+                        <label for="id_observaciones" class="form-label">Observaciones</label>
+                        <textarea class="form-control" 
+                                  id="id_observaciones"
+                                  name="observaciones" 
+                                  rows="2"
+                                  placeholder="Ej: Pago proporcional..."></textarea>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">                   
+                    <button type="button" class="btn btn-secondary close-modal">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        Registrar Pago
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Backdrop oscuro -->
+<div class="modal-backdrop fade show"></div>
+
+<script>
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('close-modal')) {
+        document.getElementById('modal-container').innerHTML = '';
+    }
+});
+</script>
