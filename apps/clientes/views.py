@@ -4,6 +4,9 @@ from .models import Cliente
 from apps.clientes.services import obtener_turno_actual, calcular_estado_cliente
 from django.db.models import Q
 
+from django.http import HttpResponse
+from .forms import ClienteForm
+
 
 @login_required
 def dashboard(request):
@@ -100,3 +103,25 @@ def modal_historial_pagos(request, cliente_id):
     }
 
     return render(request, "clientes/_modal_historial.html", context)
+
+
+@login_required
+def crear_cliente(request):
+    if request.method == "POST":
+        form = ClienteForm(request.POST)
+        if form.is_valid():
+            cliente = form.save(commit=False)
+            cliente.usuario_creador = request.user
+            cliente.save()
+            # Retornamos una respuesta vacía que dispare un evento de refresh en la tabla
+            return HttpResponse(
+                status=204,
+                headers={
+                    "HX-Trigger": "clienteActualizado",  # Evento para refrescar la lista
+                    "HX-Action": "closeModal",  # Evento opcional para cerrar
+                },
+            )
+    else:
+        form = ClienteForm()
+
+    return render(request, "clientes/_modal_cliente.html", {"form": form})

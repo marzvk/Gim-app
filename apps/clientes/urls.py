@@ -8,4 +8,5 @@ urlpatterns = [
         views.modal_historial_pagos,
         name="modal_historial",
     ),
+    path("crear/", views.crear_cliente, name="crear_cliente"),
 ]
