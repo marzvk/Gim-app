@@ -58,7 +58,8 @@
                                         ✏️
                                     </button>
                                     <button class="btn btn-sm btn-outline-danger"
-                                            onclick="confirmarBorrarPago({{ pago.id }}, '{{ cliente.apellido }}')">
+                                            hx-get="{% url 'confirmar_borrar_pago' pago.id %}"
+                                            hx-target="#modal-container">
                                         🗑️
                                     </button>
                                 </td>

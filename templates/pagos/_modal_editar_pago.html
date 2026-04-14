@@ -1,0 +1,30 @@
+<div class="modal fade show" id="modalEditarPago" tabindex="-1" style="display: block;" aria-modal="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-warning shadow-lg">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title">✏️ Editar Pago</h5>
+                <button type="button" class="btn-close" 
+                        hx-get="{% url 'modal_historial' pago.cliente.id %}" 
+                        hx-target="#modal-container"></button>
+            </div>
+            <form hx-post="{% url 'editar_pago' pago.id %}" hx-target="#modal-container">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Mes que se está editando:</label>
+                        <input type="text" class="form-control-plaintext fw-bold" value="{{ pago.mes_cubierto|date:'F Y' }}" readonly>
+                    </div>
+                    {{ form.as_p }}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" 
+                            hx-get="{% url 'modal_historial' pago.cliente.id %}" 
+                            hx-target="#modal-container">
+                        Volver
+                    </button>
+                    <button type="submit" class="btn btn-warning">Actualizar Pago</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

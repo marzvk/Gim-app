@@ -78,9 +78,9 @@
              hx-get="{{ request.get_full_path }}" 
              hx-trigger="clienteActualizado from:body"
              hx-target="this">
-             
+
              {% include 'clientes/_tabla_clientes.html' %}
-             
+
         </div>
     </div>
 
@@ -154,6 +154,16 @@ function marcarTabActivo(elemento) {
     
     // Actualizar turno hidden
     turnoHidden.value = elemento.dataset.turnoId;
+}
+
+function confirmarBorrarPago(pagoId, apellido) {
+    if (confirm(`¿Estás seguro de eliminar el pago del cliente ${apellido}?`)) {
+        // Usamos htmx.ajax para mandar un POST a la url de borrado
+        htmx.ajax('POST', `/pagos/borrar/${pagoId}/`, {
+            headers: {'X-CSRFToken': '{{ csrf_token }}'},
+            target: '#modal-container' // Esto refrescará el historial
+        });
+    }
 }
 
 </script>

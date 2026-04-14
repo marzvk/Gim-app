@@ -6,6 +6,7 @@ from django.http import HttpResponse
 
 from apps.clientes.models import Cliente
 from .models import Pago
+from .forms import PagoEditarForm
 
 
 @login_required
@@ -50,18 +51,50 @@ def modal_registrar_pago(request, cliente_id):
     return render(request, "pagos/_modal_pago.html", ctx)
 
 
+@login_required
 def editar_pago(request, pago_id):
     """Muestra el modal para editar un pago existente."""
     pago = get_object_or_404(Pago, id=pago_id)
-    # Por ahora solo devolvemos un texto para que no rompa
-    return HttpResponse(f"Formulario para editar pago {pago.id} (Próximamente)")
+    cliente = pago.cliente
+
+    if request.method == "POST":
+        form = PagoEditarForm(request.POST, instance=pago)
+        if form.is_valid():
+            form.save()
+            pagos = Pago.objects.filter(cliente=cliente).order_by("-fecha_pago")
+            return render(
+                request,
+                "clientes/_modal_historial.html",
+                {"cliente": cliente, "pagos": pagos},
+            )
+    else:
+        form = PagoEditarForm(instance=pago)
+    return render(
+        request, "pagos/_modal_editar_pago.html", {"form": form, "pago": pago}
+    )
 
 
+@login_required
 def borrar_pago(request, pago_id):
     """Borra un pago y notifica a HTMX para refrescar la lista."""
     pago = get_object_or_404(Pago, id=pago_id)
-    if request.method == "POST":  # O DELETE si configurás HTMX para eso
+    cliente = pago.cliente
+
+    if request.method == "POST":
         pago.delete()
-        # Retornamos un 200 vacío o un trigger para que el historial se actualice
-        return HttpResponse("", headers={"HX-Trigger": "pagoActualizado"})
+
+        # OBTENEMOS EL HISTORIAL ACTUALIZADO
+        pagos = Pago.objects.filter(cliente=cliente).order_by("-fecha_pago")
+
+        return render(
+            request,
+            "clientes/_modal_historial.html",
+            {"cliente": cliente, "pagos": pagos},
+        )
     return HttpResponse(status=405)
+
+
+@login_required
+def confirmar_borrar_pago(request, pago_id):
+    pago = get_object_or_404(Pago, id=pago_id)
+    return render(request, "pagos/_modal_confirmar_borrado.html", {"pago": pago})

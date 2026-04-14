@@ -1,0 +1,29 @@
+<div class="modal fade show" id="modalConfirmarBorrar" tabindex="-1" style="display: block;" aria-modal="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-danger shadow-lg">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">⚠️ ¿Eliminar Pago?</h5>
+            </div>
+            <div class="modal-body text-center">
+                <p>¿Estás seguro de eliminar el pago de <br>
+                <strong>{{ pago.mes_cubierto|date:"F Y" }}</strong>?</p>
+                <p class="text-muted small">Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <form hx-post="{% url 'borrar_pago' pago.id %}" hx-target="#modal-container">
+                    {% csrf_token %}
+                    <button type="button" class="btn btn-secondary" 
+                            hx-get="{% url 'modal_historial' pago.cliente.id %}" 
+                            hx-target="#modal-container">
+                        Cancelar
+                    </button>
+                    <button type="button" class="btn btn-danger"
+                            hx-post="{% url 'borrar_pago' pago.id %}"
+                            hx-target="#modal-container">
+                        Sí, eliminar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
