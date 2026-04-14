@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from .models import Cliente
 from apps.clientes.services import obtener_turno_actual, calcular_estado_cliente
@@ -82,3 +82,21 @@ def dashboard(request):
 
     # Si es request normal, devolver página completa
     return render(request, "clientes/dashboard.html", context)
+
+
+@login_required
+def modal_historial_pagos(request, cliente_id):
+    """
+    Muestra el historial de pagos de un cliente.
+    """
+    cliente = get_object_or_404(Cliente, id=cliente_id)
+
+    # Obtener pagos ordenados por más reciente
+    pagos = cliente.pagos.all().order_by("-fecha_pago")
+
+    context = {
+        "cliente": cliente,
+        "pagos": pagos,
+    }
+
+    return render(request, "clientes/_modal_historial.html", context)
