@@ -38,11 +38,6 @@ class Plan(models.Model):
 class Cliente(models.Model):
     """Clientes del gim, tienen turno y plan."""
 
-    PLAN_CHOICES = [
-        ("3_dias", "3 días por semana"),
-        ("5_dias", "5 días por semana"),
-    ]
-
     ESTADO_CONSULTA_CHOICES = [
         ("ninguno", "Ninguno"),
         ("pendiente", "Pendiente consulta"),
@@ -54,12 +49,6 @@ class Cliente(models.Model):
     )
     apellido = models.CharField(
         max_length=100,
-    )
-
-    plan = models.CharField(
-        max_length=20,
-        choices=PLAN_CHOICES,
-        help_text="Plan mensual del cliente",
     )
 
     telefono = models.CharField(
@@ -107,17 +96,11 @@ class Cliente(models.Model):
     )
 
     # Plan contratado
-    plan = models.CharField(
-        max_length=20, choices=PLAN_CHOICES, help_text="Plan contratado por el cliente"
-    )
-
-    plan_nuevo = models.ForeignKey(
+    plan = models.ForeignKey(
         "Plan",
         on_delete=models.PROTECT,
-        null=True,
-        blank=True,
-        related_name="clientes_nuevo",
-        help_text="Plan nuevo (FK) - temporal para migración",
+        related_name="clientes",
+        help_text="Plan contratado por el cliente",
     )
 
     class Meta:
@@ -126,4 +109,4 @@ class Cliente(models.Model):
         ordering = ["apellido", "nombre"]
 
     def __str__(self):
-        return f"{self.apellido}, {self.nombre} ({self.get_plan_display()})"
+        return f"{self.apellido}, {self.nombre} ({self.plan.nombre})"
