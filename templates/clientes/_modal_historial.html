@@ -51,7 +51,7 @@
                                     {% endif %}
                                 </td>
                                 <td>{{ pago.usuario_registrador.username|default:"-" }}</td>
-                                <!-- <td>
+                                <td>
                                     <button class="btn btn-sm btn-outline-primary" 
                                             hx-get="{% url 'editar_pago' pago.id %}"
                                             hx-target="#modal-container">
@@ -61,7 +61,7 @@
                                             onclick="confirmarBorrarPago({{ pago.id }}, '{{ cliente.apellido }}')">
                                         🗑️
                                     </button>
-                                </td> -->
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
