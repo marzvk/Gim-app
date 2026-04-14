@@ -30,7 +30,7 @@
             <tr>
                 <td>{{ cliente.apellido }}</td>
                 <td>{{ cliente.nombre }}</td>
-                <td>{{ cliente.get_plan_display }}</td>
+                <td>{{ cliente.plan.nombre }}</td>
                 <td>{{ cliente.telefono|default:"-" }}</td>
                 <td>
                     {% if cliente.estado_actual == 'al_dia' %}
