@@ -1,0 +1,100 @@
+{% load pago_tags %}
+<!-- Modal de historial de pagos -->
+<div class="modal fade show" id="modalHistorial" tabindex="-1" style="display: block;" aria-modal="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">📊 Historial de Pagos</h5>
+                <button type="button" class="btn-close btn-close-white" 
+                        onclick="document.getElementById('modal-container').innerHTML = ''"></button>
+            </div>
+            
+            <div class="modal-body">
+                <!-- Info del cliente -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <strong>Cliente:</strong> {{ cliente.apellido }}, {{ cliente.nombre }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Plan:</strong> {{ cliente.plan.nombre }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Turno:</strong> {{ cliente.turno.nombre }}
+                    </div>
+                </div>
+                
+                <!-- Tabla de pagos -->
+                {% if pagos %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Fecha Pago</th>
+                                <th>Mes Cubierto</th>
+                                <th>Monto</th>
+                                <th>Observaciones</th>
+                                <th>Registrado por</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for pago in pagos %}
+                            <tr>
+                                <td>{{ pago.fecha_pago|date:"d/m/Y" }}</td>
+                                <td>{{ pago.mes_cubierto|date:"m/Y" }}</td>
+                                <td>${{ pago.monto|floatformat:0 }}</td>
+                                <td>
+                                    {% if pago.observaciones %}
+                                        <span class="text-muted">{{ pago.observaciones|truncatewords:10 }}</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ pago.usuario_registrador.username|default:"-" }}</td>
+                                <!-- <td>
+                                    <button class="btn btn-sm btn-outline-primary" 
+                                            hx-get="{% url 'editar_pago' pago.id %}"
+                                            hx-target="#modal-container">
+                                        ✏️
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger"
+                                            onclick="confirmarBorrarPago({{ pago.id }}, '{{ cliente.apellido }}')">
+                                        🗑️
+                                    </button>
+                                </td> -->
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="alert alert-info mt-3">
+                    <strong>Total pagos:</strong> {{ pagos.count }} | 
+                    <strong>Monto total:</strong> ${% widthratio pagos|sum_monto 1 1 %}
+                </div>
+                {% else %}
+                <div class="alert alert-secondary text-center">
+                    Este cliente no tiene pagos registrados
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" 
+                        class="btn btn-secondary"
+                        onclick="document.getElementById('modal-container').innerHTML = ''">
+                    Cerrar
+                </button>
+                <button type="button" 
+                        class="btn btn-primary"
+                        hx-get="{% url 'modal_pago' cliente.id %}"
+                        hx-target="#modal-container">
+                    💰 Nuevo Pago
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Backdrop oscuro -->
+<div class="modal-backdrop fade show"></div>
