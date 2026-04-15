@@ -56,6 +56,12 @@
                             title="Registrar pago">
                         💰
                     </button>
+                    <button class="btn btn-sm btn-outline-secondary me-1"
+                            hx-get="{% url 'editar_cliente' cliente.id %}"
+                            hx-target="#modal-container"
+                            title="Editar cliente">
+                        ✏️
+                    </button>
                 </td>
             </tr>
             {% endfor %}

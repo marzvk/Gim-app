@@ -3,6 +3,8 @@ from django.contrib.auth.decorators import login_required
 from .models import Cliente
 from apps.clientes.services import obtener_turno_actual, calcular_estado_cliente
 from django.db.models import Q
+from .forms import ClienteForm
+from django.http import HttpResponse
 
 
 @login_required
@@ -100,3 +102,36 @@ def modal_historial_pagos(request, cliente_id):
     }
 
     return render(request, "clientes/_modal_historial.html", context)
+
+
+@login_required
+def crear_cliente(request):
+    if request.method == "POST":
+        form = ClienteForm(request.POST)
+        if form.is_valid():
+            cliente = form.save(commit=False)
+            cliente.usuario_creador = request.user
+            cliente.save()
+            return HttpResponse(
+                status=204, headers={"HX-Trigger": "clienteActualizado"}
+            )
+    else:
+        form = ClienteForm()
+    return render(request, "clientes/_modal_cliente.html", {"form": form})
+
+
+@login_required
+def editar_cliente(request, cliente_id):
+    cliente = get_object_or_404(Cliente, id=cliente_id)
+    if request.method == "POST":
+        form = ClienteForm(request.POST, instance=cliente)
+        if form.is_valid():
+            form.save()
+            return HttpResponse(
+                status=204, headers={"HX-Trigger": "clienteActualizado"}
+            )
+    else:
+        form = ClienteForm(instance=cliente)
+    return render(
+        request, "clientes/_modal_cliente.html", {"form": form, "cliente": cliente}
+    )

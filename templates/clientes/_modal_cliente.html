@@ -1,0 +1,79 @@
+<div class="modal fade show" id="modalCliente" tabindex="-1" style="display: block;" aria-modal="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    {% if cliente %}✏️ Editar Cliente{% else %}👤 Nuevo Cliente{% endif %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white close-modal"></button>
+            </div>
+
+            <form hx-post="{% if cliente %}{% url 'editar_cliente' cliente.id %}{% else %}{% url 'crear_cliente' %}{% endif %}"
+                  hx-target="#modal-container">
+                {% csrf_token %}
+                <div class="modal-body">
+
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger py-2">{{ form.non_field_errors }}</div>
+                    {% endif %}
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Apellido *</label>
+                            {{ form.apellido }}
+                            {% if form.apellido.errors %}
+                                <div class="text-danger small">{{ form.apellido.errors|first }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Nombre *</label>
+                            {{ form.nombre }}
+                            {% if form.nombre.errors %}
+                                <div class="text-danger small">{{ form.nombre.errors|first }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Plan *</label>
+                            {{ form.plan }}
+                            {% if form.plan.errors %}
+                                <div class="text-danger small">{{ form.plan.errors|first }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Turno *</label>
+                            {{ form.turno }}
+                            {% if form.turno.errors %}
+                                <div class="text-danger small">{{ form.turno.errors|first }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Teléfono</label>
+                            {{ form.telefono }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Email</label>
+                            {{ form.email }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary close-modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">
+                        {% if cliente %}Guardar cambios{% else %}Crear Cliente{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal-backdrop fade show"></div>
+
+<script>
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('close-modal')) {
+        document.getElementById('modal-container').innerHTML = '';
+    }
+});
+</script>
