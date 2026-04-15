@@ -58,7 +58,7 @@ class PagoEditarForm(forms.ModelForm):
                 mes_nombre = mes_cubierto.strftime("%B %Y")
                 self.add_error("mes_cubierto", f"Ya existe un pago para {mes_nombre}.")
 
-        if monto and monto <= 0:
+        if monto is not None and monto <= 0:
             self.add_error("monto", "El monto debe ser mayor a cero.")
 
         return cleaned_data
