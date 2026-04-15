@@ -36,6 +36,9 @@
                     {% endif %}
                 </span>
                 <!--  -->
+                {% if request.user.rol == 'dueño' %}
+                <a href="{% url 'reportes' %}" class="btn btn-outline-light btn-sm me-2">📊 Reportes</a>
+                {% endif %}
                 <form method="post" action="{% url 'logout' %}" class="d-inline">
                     {% csrf_token %}
                     <button type="submit" class="btn btn-outline-light btn-sm">

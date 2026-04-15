@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %}Reportes - Gimnasio{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>📊 Reportes — {{ mes_actual|date:"F Y" }}</h2>
+        <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">← Volver</a>
+    </div>
+
+    <div class="row g-4">
+        {% for dato in datos_turnos %}
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">{{ dato.turno.nombre }}</h5>
+                    <small>{{ dato.turno.hora_inicio|time:"H:i" }} - {{ dato.turno.hora_fin|time:"H:i" }}</small>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm mb-0">
+                        <tr>
+                            <td>Total activos</td>
+                            <td class="fw-bold text-end">{{ dato.total }}</td>
+                        </tr>
+                        <tr>
+                            <td>✅ Al día</td>
+                            <td class="fw-bold text-success text-end">{{ dato.al_dia }}</td>
+                        </tr>
+                        <tr>
+                            <td>❌ Vencidos</td>
+                            <td class="fw-bold text-danger text-end">{{ dato.vencidos }}</td>
+                        </tr>
+                        <tr>
+                            <td>⚠️ Pendientes</td>
+                            <td class="fw-bold text-warning text-end">{{ dato.pendientes }}</td>
+                        </tr>
+                        <tr>
+                            <td>% Vencidos</td>
+                            <td class="fw-bold text-end">{{ dato.porcentaje_vencidos }}%</td>
+                        </tr>
+                        <tr class="table-success">
+                            <td>💰 Ingresos del mes</td>
+                            <td class="fw-bold text-end">${{ dato.ingresos_mes|floatformat:0 }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+{% endblock %}
