@@ -4,7 +4,7 @@ from .models import Cliente
 from apps.clientes.services import obtener_turno_actual, calcular_estado_cliente
 from django.db.models import Q
 from .forms import ClienteForm
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseForbidden
 
 
 @login_required
@@ -134,4 +134,68 @@ def editar_cliente(request, cliente_id):
         form = ClienteForm(instance=cliente)
     return render(
         request, "clientes/_modal_cliente.html", {"form": form, "cliente": cliente}
+    )
+
+
+@login_required
+def reportes(request):
+    if request.user.rol != "dueño":
+        return HttpResponseForbidden("No tenés permiso para ver esta página.")
+
+    from apps.usuarios.models import Turno
+    from apps.pagos.models import Pago
+    from django.db.models import Sum, Count
+    from datetime import date
+
+    hoy = date.today()
+    mes_actual = hoy.replace(day=1)
+    turnos = Turno.objects.filter(activo=True).order_by("hora_inicio")
+
+    datos_turnos = []
+    for turno in turnos:
+        clientes_turno = Cliente.objects.filter(
+            turno=turno, activo=True
+        ).select_related("plan")
+
+        total = clientes_turno.count()
+        al_dia = vencidos = pendientes = 0
+
+        for cliente in clientes_turno:
+            estado = calcular_estado_cliente(cliente, hoy)
+            if estado == "al_dia":
+                al_dia += 1
+            elif estado == "vencido":
+                vencidos += 1
+            elif estado == "pendiente_consulta":
+                pendientes += 1
+
+        ingresos_mes = (
+            Pago.objects.filter(
+                cliente__turno=turno,
+                mes_cubierto=mes_actual,
+            ).aggregate(total=Sum("monto"))["total"]
+            or 0
+        )
+
+        porcentaje_vencidos = round((vencidos / total * 100), 1) if total > 0 else 0
+
+        datos_turnos.append(
+            {
+                "turno": turno,
+                "total": total,
+                "al_dia": al_dia,
+                "vencidos": vencidos,
+                "pendientes": pendientes,
+                "porcentaje_vencidos": porcentaje_vencidos,
+                "ingresos_mes": ingresos_mes,
+            }
+        )
+
+    return render(
+        request,
+        "clientes/reportes.html",
+        {
+            "datos_turnos": datos_turnos,
+            "mes_actual": mes_actual,
+        },
     )
