@@ -52,9 +52,15 @@
                     </div>
                     
                     <!-- Botón limpiar -->
-                    <div class="col-md-3 d-flex align-items-end">
+                    <div class="col-md-3 d-flex align-items-end gap-2">
                         <button type="button" id="btn-limpiar" class="btn btn-outline-secondary w-100">
-                            🔄 Limpiar filtros
+                            🔄 Limpiar
+                        </button>
+                        <button type="button"
+                                class="btn btn-success w-100"
+                                hx-get="{% url 'crear_cliente' %}"
+                                hx-target="#modal-container">
+                            ➕ Nuevo
                         </button>
                     </div>
                 </div>
@@ -124,8 +130,19 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.text())
         .then(html => {
             container.innerHTML = html;
+            htmx.process(container);
         });
     }
+
+    // Cerrar modal y refrescar tabla cuando se registra o borra un pago
+    document.body.addEventListener('pagoActualizado', function() {
+    document.getElementById('modal-container').innerHTML = '';
+    aplicarFiltros();
+});
+    document.body.addEventListener('clienteActualizado', function() {
+    document.getElementById('modal-container').innerHTML = '';
+    aplicarFiltros();
+});
 });
 function marcarTabActivo(elemento) {
     // Quitar active de todos

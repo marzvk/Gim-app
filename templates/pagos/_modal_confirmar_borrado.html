@@ -1,0 +1,39 @@
+<!-- Modal confirmar borrado -->
+<div class="modal fade show" id="modalConfirmarBorrado" tabindex="-1" style="display: block;" aria-modal="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">🗑️ Confirmar borrado</h5>
+                <button type="button" class="btn-close btn-close-white close-modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <p>¿Estás seguro de eliminar este pago?</p>
+                <div class="alert alert-warning">
+                    <strong>Cliente:</strong> {{ pago.cliente.apellido }}, {{ pago.cliente.nombre }}<br>
+                    <strong>Mes:</strong> {{ pago.mes_cubierto|date:"m/Y" }}<br>
+                    <strong>Monto:</strong> ${{ pago.monto|floatformat:0 }}
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary close-modal">Cancelar</button>
+                <form hx-post="{% url 'borrar_pago' pago.id %}"
+                      hx-target="#modal-container">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Sí, borrar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-backdrop fade show"></div>
+
+<script>
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('close-modal')) {
+        document.getElementById('modal-container').innerHTML = '';
+    }
+});
+</script>

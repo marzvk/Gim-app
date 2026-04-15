@@ -30,7 +30,7 @@
             <tr>
                 <td>{{ cliente.apellido }}</td>
                 <td>{{ cliente.nombre }}</td>
-                <td>{{ cliente.get_plan_display }}</td>
+                <td>{{ cliente.plan.nombre }}</td>
                 <td>{{ cliente.telefono|default:"-" }}</td>
                 <td>
                     {% if cliente.estado_actual == 'al_dia' %}
@@ -44,10 +44,23 @@
                     {% endif %}
                 </td>
                 <td>
+                    <button class="btn btn-sm btn-outline-primary me-1"
+                            hx-get="{% url 'modal_historial' cliente.id %}"
+                            hx-target="#modal-container"
+                            title="Ver historial">
+                        📊
+                    </button>
                     <button class="btn btn-sm btn-primary"
                             hx-get="{% url 'modal_pago' cliente.id %}"
-                            hx-target="#modal-container">
-                        💰 Pago
+                            hx-target="#modal-container"
+                            title="Registrar pago">
+                        💰
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary me-1"
+                            hx-get="{% url 'editar_cliente' cliente.id %}"
+                            hx-target="#modal-container"
+                            title="Editar cliente">
+                        ✏️
                     </button>
                 </td>
             </tr>

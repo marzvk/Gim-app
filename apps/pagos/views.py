@@ -1,49 +1,77 @@
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from django.contrib import messages
 from datetime import date
+from django.http import HttpResponse
 
 from apps.clientes.models import Cliente
 from .models import Pago
+from .forms import PagoEditarForm
 
 
 @login_required
 def modal_registrar_pago(request, cliente_id):
-    """Modal de pago del cliente.
-    Si es POST, guarda el pago."""
-
     cliente = get_object_or_404(Cliente, id=cliente_id, activo=True)
 
     if request.method == "POST":
-        monto = request.POST.get("monto")
-        fecha_pago = request.POST.get("fecha_pago") or date.today()
-        observaciones = request.POST.get("observaciones", "")
+        pago_instancia = Pago(cliente=cliente, usuario_registrador=request.user)
+        form = PagoEditarForm(data=request.POST, instance=pago_instancia)
+        if form.is_valid():
+            pago = form.save(commit=False)
+            pago.fecha_pago = date.today()
+            pago.save()
+            return HttpResponse(status=204, headers={"HX-Trigger": "pagoActualizado"})
+    else:
+        mes_inicial = date.today().replace(day=1).strftime("%Y-%m")
+        monto_inicial = cliente.plan.precio if cliente.plan else 0
+        form = PagoEditarForm(
+            initial={"mes_cubierto": mes_inicial, "monto": monto_inicial}
+        )
 
-        if not monto:
-            messages.error(request, "El monto es obligatorio")
-        else:
-            try:
-                monto = float(monto)
+    return render(request, "pagos/_modal_pago.html", {"cliente": cliente, "form": form})
 
-                mes_cubierto = date.today().replace(day=1)
 
-                Pago.objects.create(
-                    cliente=cliente,
-                    fecha_pago=fecha_pago,
-                    mes_cubierto=mes_cubierto,
-                    monto=monto,
-                    observaciones=observaciones,
-                    usuario_registrador=request.user,
-                )
-                messages.success(
-                    request, f"Pago registrado para {cliente.nombre} {cliente.apellido}"
-                )
+@login_required
+def editar_pago(request, pago_id):
+    pago = get_object_or_404(Pago, id=pago_id)
+    cliente = pago.cliente
 
-                return render(request, "pagos/_pago_success.html")
+    if request.method == "POST":
+        form = PagoEditarForm(data=request.POST, instance=pago)
+        if form.is_valid():
+            form.save()
+            pagos = Pago.objects.filter(cliente=cliente).order_by("-fecha_pago")
+            return render(
+                request,
+                "clientes/_modal_historial.html",
+                {"cliente": cliente, "pagos": pagos},
+            )
+    else:
+        form = PagoEditarForm(instance=pago)
 
-            except ValueError:
-                messages.error(request, "Monto invalido")
+    return render(
+        request, "pagos/_modal_editar_pago.html", {"form": form, "pago": pago}
+    )
 
-    ctx = {"cliente": cliente, "today": date.today()}
 
-    return render(request, "pagos/_modal_pago.html", ctx)
+@login_required
+def borrar_pago(request, pago_id):
+    pago = get_object_or_404(Pago, id=pago_id)
+    cliente = pago.cliente
+
+    if request.method == "POST":
+        pago.delete()
+        pagos = Pago.objects.filter(cliente=cliente).order_by("-fecha_pago")
+        response = render(
+            request,
+            "clientes/_modal_historial.html",
+            {"cliente": cliente, "pagos": pagos},
+        )
+        response["HX-Trigger"] = "pagoActualizado"
+        return response
+    return HttpResponse(status=405)
+
+
+@login_required
+def confirmar_borrar_pago(request, pago_id):
+    pago = get_object_or_404(Pago, id=pago_id)
+    return render(request, "pagos/_modal_confirmar_borrado.html", {"pago": pago})

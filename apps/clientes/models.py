@@ -2,13 +2,41 @@ from django.db import models
 from django.conf import settings
 
 
+class Plan(models.Model):
+    """
+    Planes de entrenamiento disponibles en el gimnasio.
+    El dueño puede configurarlos.
+    """
+
+    codigo = models.CharField(
+        max_length=20,
+        unique=True,
+        help_text="Código único del plan (ej: 3_dias, 5_dias)",
+    )
+
+    nombre = models.CharField(max_length=100, help_text="Nombre descriptivo del plan")
+
+    precio = models.DecimalField(
+        max_digits=10, decimal_places=2, help_text="Precio mensual del plan"
+    )
+
+    activo = models.BooleanField(
+        default=True, help_text="Si el plan está disponible para nuevos clientes"
+    )
+
+    orden = models.PositiveIntegerField(default=0, help_text="Orden de visualización")
+
+    class Meta:
+        verbose_name = "Plan"
+        verbose_name_plural = "Planes"
+        ordering = ["orden", "nombre"]
+
+    def __str__(self):
+        return f"{self.nombre} - ${self.precio}"
+
+
 class Cliente(models.Model):
     """Clientes del gim, tienen turno y plan."""
-
-    PLAN_CHOICES = [
-        ("3_dias", "3 días por semana"),
-        ("5_dias", "5 días por semana"),
-    ]
 
     ESTADO_CONSULTA_CHOICES = [
         ("ninguno", "Ninguno"),
@@ -21,12 +49,6 @@ class Cliente(models.Model):
     )
     apellido = models.CharField(
         max_length=100,
-    )
-
-    plan = models.CharField(
-        max_length=20,
-        choices=PLAN_CHOICES,
-        help_text="Plan mensual del cliente",
     )
 
     telefono = models.CharField(
@@ -73,10 +95,18 @@ class Cliente(models.Model):
         help_text="Quien dio de alta al cliente",
     )
 
+    # Plan contratado
+    plan = models.ForeignKey(
+        "Plan",
+        on_delete=models.PROTECT,
+        related_name="clientes",
+        help_text="Plan contratado por el cliente",
+    )
+
     class Meta:
         verbose_name = "Cliente"
         verbose_name_plural = "Clientes"
         ordering = ["apellido", "nombre"]
 
     def __str__(self):
-        return f"{self.apellido}, {self.nombre} ({self.get_plan_display()})"
+        return f"{self.apellido}, {self.nombre} ({self.plan.nombre})"
