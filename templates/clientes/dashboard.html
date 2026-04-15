@@ -124,8 +124,15 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.text())
         .then(html => {
             container.innerHTML = html;
+            htmx.process(container);
         });
     }
+
+    // Cerrar modal y refrescar tabla cuando se registra o borra un pago
+    document.body.addEventListener('pagoActualizado', function() {
+    document.getElementById('modal-container').innerHTML = '';
+    aplicarFiltros();
+});
 });
 function marcarTabActivo(elemento) {
     // Quitar active de todos

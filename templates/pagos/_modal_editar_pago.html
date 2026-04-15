@@ -1,20 +1,20 @@
-<!-- Modal de registro de pago -->
-<div class="modal fade show" id="modalPago" tabindex="-1" style="display: block;" aria-modal="true">
+<!-- Modal editar pago -->
+<div class="modal fade show" id="modalEditarPago" tabindex="-1" style="display: block;" aria-modal="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title">💰 Registrar Pago</h5>
-                <button type="button" class="btn-close btn-close-white close-modal"></button>
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title">✏️ Editar Pago</h5>
+                <button type="button" class="btn-close close-modal"></button>
             </div>
-            
-            <form hx-post="{% url 'modal_pago' cliente.id %}" 
+
+            <form hx-post="{% url 'editar_pago' pago.id %}"
                   hx-target="#modal-container">
                 {% csrf_token %}
-                
+
                 <div class="modal-body">
                     <div class="alert alert-info">
-                        <strong>Cliente:</strong> {{ cliente.apellido }}, {{ cliente.nombre }}<br>
-                        <strong>Plan:</strong> {{ cliente.plan.nombre }}
+                        <strong>Cliente:</strong> {{ pago.cliente.apellido }}, {{ pago.cliente.nombre }}<br>
+                        <strong>Fecha de pago:</strong> {{ pago.fecha_pago|date:"d/m/Y" }}
                     </div>
 
                     {% if form.non_field_errors %}
@@ -34,7 +34,6 @@
                     <div class="mb-3">
                         <label for="{{ form.monto.id_for_label }}" class="form-label">Monto *</label>
                         {{ form.monto }}
-                        <small class="form-text text-muted">Sugerido: ${{ cliente.plan.precio }}</small>
                         {% if form.monto.errors %}
                             <div class="text-danger small fw-bold">{{ form.monto.errors|first }}</div>
                         {% endif %}
@@ -46,10 +45,10 @@
                         {{ form.observaciones }}
                     </div>
                 </div>
-                
-                <div class="modal-footer">                   
+
+                <div class="modal-footer">
                     <button type="button" class="btn btn-secondary close-modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Registrar Pago</button>
+                    <button type="submit" class="btn btn-warning">Guardar cambios</button>
                 </div>
             </form>
         </div>
