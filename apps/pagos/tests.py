@@ -109,3 +109,113 @@ class PagoFormTestCase(BaseTestCase):
         )
         self.assertFalse(form.is_valid())
         self.assertIn("mes_cubierto", form.errors)
+
+
+# Test registrar pagos
+
+
+class RegistrarPagoViewTestCase(BaseTestCase):
+    """Tests para la vista modal_registrar_pago"""
+
+    def test_redirige_sin_login(self):
+        response = self.client.get(f"/pagos/pago/{self.cliente.id}/")
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/login/", response.url)
+
+    def test_get_modal_pago(self):
+        self.client.login(username="testuser", password="test123")
+        response = self.client.get(f"/pagos/pago/{self.cliente.id}/")
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "pagos/_modal_pago.html")
+
+    def test_registrar_pago_valido(self):
+        self.client.login(username="testuser", password="test123")
+        response = self.client.post(
+            f"/pagos/pago/{self.cliente.id}/",
+            {
+                "mes_cubierto": "2026-04",
+                "monto": "35000",
+                "observaciones": "",
+            },
+        )
+        self.assertEqual(response.status_code, 204)
+        self.assertTrue(Pago.objects.filter(cliente=self.cliente).exists())
+
+    def test_no_permite_pago_duplicado(self):
+        Pago.objects.create(
+            cliente=self.cliente,
+            fecha_pago=date(2026, 4, 1),
+            mes_cubierto=date(2026, 4, 1),
+            monto=35000,
+            usuario_registrador=self.usuario,
+        )
+        self.client.login(username="testuser", password="test123")
+        response = self.client.post(
+            f"/pagos/pago/{self.cliente.id}/",
+            {
+                "mes_cubierto": "2026-04",
+                "monto": "35000",
+                "observaciones": "",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Pago.objects.filter(cliente=self.cliente).count(), 1)
+
+
+class EditarPagoViewTestCase(BaseTestCase):
+    """Tests para la vista editar_pago"""
+
+    def setUp(self):
+        super().setUp()
+        self.pago = Pago.objects.create(
+            cliente=self.cliente,
+            fecha_pago=date(2026, 4, 1),
+            mes_cubierto=date(2026, 4, 1),
+            monto=35000,
+            usuario_registrador=self.usuario,
+        )
+
+    def test_get_modal_editar(self):
+        self.client.login(username="testuser", password="test123")
+        response = self.client.get(f"/pagos/editar/{self.pago.id}/")
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "pagos/_modal_editar_pago.html")
+
+    def test_editar_pago_valido(self):
+        self.client.login(username="testuser", password="test123")
+        response = self.client.post(
+            f"/pagos/editar/{self.pago.id}/",
+            {
+                "mes_cubierto": "2026-04",
+                "monto": "40000",
+                "observaciones": "Editado",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.pago.refresh_from_db()
+        self.assertEqual(self.pago.monto, 40000)
+
+
+class BorrarPagoViewTestCase(BaseTestCase):
+    """Tests para la vista borrar_pago"""
+
+    def setUp(self):
+        super().setUp()
+        self.pago = Pago.objects.create(
+            cliente=self.cliente,
+            fecha_pago=date(2026, 4, 1),
+            mes_cubierto=date(2026, 4, 1),
+            monto=35000,
+            usuario_registrador=self.usuario,
+        )
+
+    def test_borrar_pago(self):
+        self.client.login(username="testuser", password="test123")
+        response = self.client.post(f"/pagos/borrar/{self.pago.id}/")
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Pago.objects.filter(id=self.pago.id).exists())
+
+    def test_get_no_permitido(self):
+        self.client.login(username="testuser", password="test123")
+        response = self.client.get(f"/pagos/borrar/{self.pago.id}/")
+        self.assertEqual(response.status_code, 405)
