@@ -39,20 +39,47 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 
-    // 2. MANEJO DE MODALES (SOLUCIÓN AL BACKDROP)
+    // ----------------------------------------------------
+    // --- NUEVO: FIX PARA CIERRE DE MODALES (STATUS 204) ---
+    // ----------------------------------------------------
+    // Esto intercepta la respuesta ANTES de que HTMX toque el HTML.
+    // Si el servidor dice "Guardado" (204 o 200 vacío), le pedimos a Bootstrap
+    // que cierre el modal suavemente. Su lógica interna se encarga de borrar el fondo oscuro.
+    document.body.addEventListener('htmx:beforeSwap', function (evt) {
+        if (evt.detail.target.id === 'modal-container') {
+            const status = evt.detail.xhr.status;
+            const responseText = evt.detail.xhr.responseText;
+
+            // Detectar respuesta exitosa vacía
+            if (status === 204 || (status === 200 && responseText.trim() === "")) {
+                evt.preventDefault(); // Decimos: "HTMX, NO borres el HTML aún"
+
+                // Buscamos el modal visible actualmente
+                const modalEl = document.querySelector('#modal-container .modal');
+                if (modalEl) {
+                    const modalInstance = bootstrap.Modal.getInstance(modalEl);
+                    if (modalInstance) {
+                        modalInstance.hide(); // Bootstrap cierra (animación + backdrop)
+                        // El listener 'hidden.bs.modal' que ya tenes abajo se encargará del innerHTML=''
+                    }
+                }
+            }
+        }
+    });
+
+
+    // 2. MANEJO DE MODALES (SOLUCIÓN AL BACKDROP Y APERTURA)
     document.body.addEventListener('htmx:afterSwap', function (e) {
         const target = e.detail.target;
 
         // Solo actuamos si el cambio ocurrió en el contenedor de modales
         if (target.id === 'modal-container') {
 
-            // --- CASO A: El modal se cerró (HTMX devolvió contenido vacío) ---
+            // --- CASO A: El modal se cerró (Contenedor vacío por limpieza manual) ---
+            // Esto queda como respaldo por si el evento 'hidden.bs.modal' falla en limpiar
             if (target.children.length === 0) {
-                // A veces Bootstrap no limpia el backdrop si el HTML desaparece muy rápido
                 const backdrop = document.querySelector('.modal-backdrop');
                 if (backdrop) backdrop.remove();
-
-                // Aseguramos que el body vuelva a ser normal
                 document.body.classList.remove('modal-open');
                 document.body.style.overflow = '';
                 document.body.style.paddingRight = '';
@@ -64,13 +91,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (modalEl && modalEl.classList.contains('modal')) {
                 // Inicializamos el modal de Bootstrap
                 const modal = new bootstrap.Modal(modalEl, {
-                    backdrop: true, // Asegura que se pueda cerrar clickeando afuera
-                    keyboard: true  // Permite cerrar con ESC
+                    backdrop: true,
+                    keyboard: true
                 });
                 modal.show();
 
-                // Cuando el modal se cierre NATIVAMENTE (clic en X, o clic afuera),
-                // limpiamos el contenedor para no dejar basura en el DOM.
+                // Limpieza al cerrar: Borra el HTML cuando Bootstrap termina de ocultarlo
                 modalEl.addEventListener('hidden.bs.modal', function () {
                     target.innerHTML = '';
                     modal.dispose();
@@ -98,18 +124,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 4. MANEJO MANUAL DE CLASE "close-modal"
     document.addEventListener('click', function (e) {
-        // Buscamos si clickeamos en algo con la clase .close-modal (o dentro de ella)
         const btn = e.target.closest('.close-modal');
-
         if (btn) {
-            // Buscamos el contenedor modal más cercano
             const modalEl = btn.closest('.modal');
-
             if (modalEl) {
-                // Obtenemos la instancia de Bootstrap de ese modal
                 const modalInstance = bootstrap.Modal.getInstance(modalEl);
-
-                // Si existe, la cerramos elegantemente (esto borra el fondo oscuro automáticamente)
                 if (modalInstance) {
                     modalInstance.hide();
                 }
