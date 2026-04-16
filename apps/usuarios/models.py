@@ -1,5 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 
 class Usuario(AbstractUser):
@@ -52,3 +54,20 @@ class Turno(models.Model):
 
     def __str__(self):
         return f"{self.nombre} ({self.hora_inicio.strftime('%H:%M')} - {self.hora_fin.strftime('%H:%M')})"
+
+
+@receiver(post_save, sender=Usuario)
+def asignar_grupo_dueno(sender, instance, **kwargs):
+    from django.contrib.auth.models import Group
+
+    if instance.rol == "dueño":
+        grupo, _ = Group.objects.get_or_create(name="Dueño")
+        instance.groups.add(grupo)
+        if not instance.is_staff:
+            Usuario.objects.filter(pk=instance.pk).update(is_staff=True)
+    else:
+        try:
+            grupo = Group.objects.get(name="Dueño")
+            instance.groups.remove(grupo)
+        except Group.DoesNotExist:
+            pass
