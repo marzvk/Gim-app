@@ -1,67 +1,50 @@
 <!-- Modal de registro de pago -->
-<div class="modal fade show" id="modalPago" tabindex="-1" style="display: block;" aria-modal="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title">💰 Registrar Pago</h5>
-                <button type="button" class="btn-close btn-close-white close-modal"></button>
-            </div>
-            
-            <form hx-post="{% url 'modal_pago' cliente.id %}" 
-                  hx-target="#modal-container">
-                {% csrf_token %}
-                
-                <div class="modal-body">
-                    <div class="alert alert-info">
-                        <strong>Cliente:</strong> {{ cliente.apellido }}, {{ cliente.nombre }}<br>
-                        <strong>Plan:</strong> {{ cliente.plan.nombre }}
-                    </div>
-
-                    {% if form.non_field_errors %}
-                        <div class="alert alert-danger py-2">{{ form.non_field_errors }}</div>
-                    {% endif %}
-
-                    <!-- Mes cubierto -->
-                    <div class="mb-3">
-                        <label for="{{ form.mes_cubierto.id_for_label }}" class="form-label">Mes que cubre *</label>
-                        {{ form.mes_cubierto }}
-                        {% if form.mes_cubierto.errors %}
-                            <div class="text-danger small fw-bold">{{ form.mes_cubierto.errors|first }}</div>
-                        {% endif %}
-                    </div>
-
-                    <!-- Monto -->
-                    <div class="mb-3">
-                        <label for="{{ form.monto.id_for_label }}" class="form-label">Monto *</label>
-                        {{ form.monto }}
-                        <small class="form-text text-muted">Sugerido: ${{ cliente.plan.precio }}</small>
-                        {% if form.monto.errors %}
-                            <div class="text-danger small fw-bold">{{ form.monto.errors|first }}</div>
-                        {% endif %}
-                    </div>
-
-                    <!-- Observaciones -->
-                    <div class="mb-3">
-                        <label for="{{ form.observaciones.id_for_label }}" class="form-label">Observaciones</label>
-                        {{ form.observaciones }}
-                    </div>
-                </div>
-                
-                <div class="modal-footer">                   
-                    <button type="button" class="btn btn-secondary close-modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Registrar Pago</button>
-                </div>
-            </form>
-        </div>
+<div class="modal-content">
+    <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">💰 Registrar Pago</h5>
+        <button type="button" class="btn-close btn-close-white close-modal"></button>
     </div>
+    
+    <form hx-post="{% url 'modal_pago' cliente.id %}" 
+          hx-target="#modal-container">
+        {% csrf_token %}
+        
+        <div class="modal-body">
+            <div class="alert alert-info">
+                <strong>Cliente:</strong> {{ cliente.apellido }}, {{ cliente.nombre }}<br>
+                <strong>Plan:</strong> {{ cliente.plan.nombre }}
+            </div>
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger py-2">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            <div class="mb-3">
+                <label for="{{ form.mes_cubierto.id_for_label }}" class="form-label">Mes que cubre *</label>
+                {{ form.mes_cubierto }}
+                {% if form.mes_cubierto.errors %}
+                    <div class="text-danger small fw-bold">{{ form.mes_cubierto.errors|first }}</div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ form.monto.id_for_label }}" class="form-label">Monto *</label>
+                {{ form.monto }}
+                <small class="form-text text-muted">Sugerido: ${{ cliente.plan.precio }}</small>
+                {% if form.monto.errors %}
+                    <div class="text-danger small fw-bold">{{ form.monto.errors|first }}</div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ form.observaciones.id_for_label }}" class="form-label">Observaciones</label>
+                {{ form.observaciones }}
+            </div>
+        </div>
+        
+        <div class="modal-footer">                   
+            <button type="button" class="btn btn-secondary close-modal">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Registrar Pago</button>
+        </div>
+    </form>
 </div>
-
-<div class="modal-backdrop fade show"></div>
-
-<script>
-document.addEventListener('click', function(e) {
-    if (e.target.classList.contains('close-modal')) {
-        document.getElementById('modal-container').innerHTML = '';
-    }
-});
-</script>

@@ -104,8 +104,12 @@
         {% include 'clientes/_tabla_clientes.html' %}
     </div>
 
-     <!-- CONTENEDOR DE MODAL -->
-    <div id="modal-container"></div>
+    <!-- Modal Shell estático -->
+    <div class="modal fade" id="modal-shell" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog" id="modal-dialog">
+            <div id="modal-container"></div>
+        </div>
+    </div>
 
 </div>
 {% endblock %}
@@ -113,45 +117,56 @@
 {% block extra_js %}
 <script>
   
-// 1. Manejo visual de las Tabs (Styles only, HTMX maneja la data)
+// 1. Manejo visual de las Tabs
 function marcarTabActivo(elemento) {
-    // Ocultar toast previo si existe
-    // (Opcional) Limpiar contenedor para efecto de carga fresca
     document.getElementById('clientes-container').style.opacity = '0.5';
-    
-    // Quitar active de todos
     document.querySelectorAll('#tabs-turnos .nav-link').forEach(function(link) {
         link.classList.remove('active', 'fw-bold');
     });
-    // Agregar active al clickeado
     elemento.classList.add('active', 'fw-bold');
+
+    // Actualizar el campo oculto con el turno seleccionado
+    const turnoId = elemento.dataset.turnoId;
+    document.getElementById('turno-hidden').value = turnoId;
 }
 
-// Escuchar fin de la carga para restaurar opacidad
+// Restaurar opacidad
 document.body.addEventListener('htmx:afterSwap', function(evt) {
     if(evt.detail.target.id === 'clientes-container') {
         evt.detail.target.style.opacity = '1';
     }
 });
 
-// 2. Recarga de datos (Reemplazo a lógica anterior)
-// Ya no es necesaria la función 'aplicarFiltros' porque HTMX lo hace nativamente.
-// Sin embargo, mantenemos los eventos que tenías para actualizar la tabla tras pagos/cambios.
-document.body.addEventListener('pagoActualizado', function() {
-    // Disparamos un evento de toast
-    htmx.trigger(document.body, 'showToast', {message: 'Pago registrado correctamente', type: 'success'});
+// 2. FUNCIÓN ROBUSTA DE RECARGA
+// Lee todos los filtros activos (Turno, Búsqueda, Estado) y pide al servidor una tabla nueva.
+function recargarTabla() {
+    const form = document.getElementById('form-filtros');
+    if (!form) return;
+
+    // Convertimos el formulario a parámetros URL (ej: ?turno=2&busqueda=Juan)
+    const params = new URLSearchParams(new FormData(form));
     
-    // Recargamos la tabla actual (limpiando filtros o manteniendo, según preferencia)
-    // Aquí recargamos con los filtros actuales usando HTMX en el input
-    htmx.trigger('#id_busqueda', 'change'); 
+    // Hacemos la petición HTMX manualmente
+    htmx.ajax('GET', "{% url 'dashboard' %}?" + params.toString(), {
+        target: '#clientes-container'
+    });
+}
+
+// 3. EVENTOS DE ACTUALIZACIÓN
+// Escuchan cuando se guardan datos, muestran toast y REFRESCAN LA TABLA
+document.body.addEventListener('pagoActualizado', function() {
+    window.showToast('Pago registrado correctamente', 'success');
+    recargarTabla(); // AQUI ESTA LA MAGIA: Recarga el estado
 });
+
 document.body.addEventListener('clienteActualizado', function() {
-    htmx.trigger(document.body, 'showToast', {message: 'Cliente guardado', type: 'success'});
-    htmx.trigger('#id_busqueda', 'change');
+    window.showToast('Cliente guardado', 'success');
+    recargarTabla();
 });
+
 document.body.addEventListener('clienteBorrado', function() {
-    htmx.trigger(document.body, 'showToast', {message: 'Cliente eliminado', type: 'error'});
-    htmx.trigger('#id_busqueda', 'change');
+    window.showToast('Cliente eliminado', 'error');
+    recargarTabla();
 });
 </script>
 {% endblock %}
