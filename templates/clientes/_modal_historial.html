@@ -1,12 +1,11 @@
 {% load pago_tags %}
 <!-- Modal de historial de pagos -->
-<div class="modal fade show" id="modalHistorial" tabindex="-1" style="display: block;" aria-modal="true">
+<div class="modal fade" id="modalHistorial" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title">📊 Historial de Pagos</h5>
-                <button type="button" class="btn-close btn-close-white" 
-                        onclick="document.getElementById('modal-container').innerHTML = ''"></button>
+                <button type="button" class="btn-close btn-close-white close-modal"></button>
             </div>
             
             <div class="modal-body">
@@ -82,8 +81,7 @@
             
             <div class="modal-footer">
                 <button type="button" 
-                        class="btn btn-secondary"
-                        onclick="document.getElementById('modal-container').innerHTML = ''">
+                        class="btn btn-secondary close-modal">
                     Cerrar
                 </button>
                 <button type="button" 
@@ -97,5 +95,31 @@
     </div>
 </div>
 
-<!-- Backdrop oscuro -->
-<div class="modal-backdrop fade show"></div>
+<script>
+    
+    document.body.addEventListener('htmx:beforeSwap', function(evt) {
+    if (evt.detail.target.id === 'modal-container') {
+        
+        // 1. Limpieza de fondo 
+        document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+        document.body.classList.remove('modal-open');
+        document.body.style.removeProperty('overflow');
+        document.body.style.removeProperty('padding-right');
+
+        // 2. Cerrar modal automáticamente si la respuesta está vacía (Éxito al guardar)
+        // Esto asume que tu vista de Django devuelve un status 200 OK sin contenido al guardar.
+        if (evt.detail.xhr.status === 200 && evt.detail.xhr.responseText.trim() === "") {
+             // Evitamos que HTMLX reemplace el contenido con "nada"
+             evt.preventDefault(); 
+             
+             // Buscamos la instancia del modal y la ocultamos
+             const modalEl = document.querySelector('#modal-container .modal');
+             if (modalEl) {
+                 const modalInstance = bootstrap.Modal.getInstance(modalEl);
+                 if (modalInstance) modalInstance.hide();
+             }
+             
+        }
+    }
+});
+</script>

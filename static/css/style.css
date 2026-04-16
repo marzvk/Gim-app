@@ -1,0 +1,33 @@
+/* Spinner de carga global */
+#global-spinner {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 9999;
+    display: none;
+    /* Oculto por defecto */
+    background: rgba(255, 255, 255, 0.8);
+    padding: 20px;
+    border-radius: 50%;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Clase utilitaria de HTMX: cuando htmx hace request, esto se muestra */
+.htmx-request .htmx-indicator {
+    display: inline-block !important;
+}
+
+/* Por defecto ocultamos los indicadores */
+.htmx-indicator {
+    display: none;
+}
+
+/* Pequeño ajuste para el spinner dentro de inputs */
+.input-spinner {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 5;
+}
