@@ -12,8 +12,10 @@
             <a class="nav-link {% if turno == turno_actual %}active fw-bold{% endif %}" 
                href="?turno={{ turno.id }}"
                data-turno-id="{{ turno.id }}"
-               hx-get="?turno={{ turno.id }}"
+               hx-get="{% url 'dashboard' %}?turno={{ turno.id }}"
                hx-target="#clientes-container"
+               hx-push-url="true"
+               hx-swap="innerHTML"
                onclick="marcarTabActivo(this)">
                 {{ turno.nombre }}
             </a>
@@ -22,45 +24,119 @@
     </ul>
 
     <!-- FORMULARIO DE BÚSQUEDA Y FILTROS -->
-    <div class="card mb-3">
+    <div class="card mb-3 shadow-sm">
         <div class="card-body">
+            <!-- ID para hx-include -->
             <form id="form-filtros">
                 <input type="hidden" id="turno-hidden" name="turno" value="{{ turno_actual.id|default:'' }}">
                 
                 <div class="row g-3">
                     <!-- Campo de búsqueda -->
-                    <div class="col-md-6">
+                    <div class="col-md-6 position-relative">
                         <label for="id_busqueda" class="form-label">Buscar cliente</label>
+                        <div class="d-flex align-items-center">
                         <input type="text" 
                                class="form-control" 
                                id="id_busqueda"
                                name="busqueda" 
                                placeholder="Nombre o apellido..."
-                               value="{{ busqueda }}">
-                        <small class="form-text text-muted">Busca en nombre y apellido</small>
+                               value="{{ busqueda }}"
+                              
+                               hx-get="{% url 'dashboard' %}"
+                               hx-target="#clientes-container"
+                               hx-trigger="input changed delay:300ms"
+                               hx-include="#form-filtros"
+                               hx-indicator="#search-spinner">
+                        <!-- Spinner pequeño dentro del input -->
+                            <div id="search-spinner" class="htmx-indicator input-spinner text-muted">
+                                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            </div>
+                        </div>
                     </div>
                     
-                    <!-- Filtro por estado -->
+                    <!-- Filtro por estado (Dropdown) -->
                     <div class="col-md-3">
-                        <label for="id_estado" class="form-label">Filtrar por estado</label>
-                        <select class="form-select" id="id_estado" name="estado">
-                            <option value="">Todos</option>
-                            <option value="al_dia" {% if filtro_estado == 'al_dia' %}selected{% endif %}>✅ Al día</option>
-                            <option value="vencido" {% if filtro_estado == 'vencido' %}selected{% endif %}>❌ Vencido</option>
-                            <option value="pendiente" {% if filtro_estado == 'pendiente' %}selected{% endif %}>⚠️ Pendiente</option>
-                        </select>
+                        <label class="form-label">Filtrar por estado</label>
+                        <div class="dropdown w-100">
+                            <!-- El botón muestra el estado seleccionado actual -->
+                            <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start d-flex justify-content-between align-items-center" 
+                                    type="button" 
+                                    data-bs-toggle="dropdown" 
+                                    aria-expanded="false">
+                                <span>
+                                    Estado: 
+                                    {% if filtro_estado == 'al_dia' %}✅ Al día
+                                    {% elif filtro_estado == 'vencido' %}❌ Vencido
+                                    {% elif filtro_estado == 'pendiente' %}⚠️ Pendiente
+                                    {% else %}Todos{% endif %}
+                                </span>
+                            </button>
+
+                            <ul class="dropdown-menu w-100 shadow">
+                                <li>
+                                    <a class="dropdown-item" 
+                                       href="#" 
+                                       hx-get="{% url 'dashboard' %}?estado="
+                                       hx-target="#clientes-container"
+                                       hx-include="#form-filtros"
+                                       hx-swap="innerHTML scroll:window:top">
+                                        🟣 Todos
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" 
+                                       href="#" 
+                                       hx-get="{% url 'dashboard' %}?estado=al_dia"
+                                       hx-target="#clientes-container"
+                                       hx-include="#form-filtros"
+                                       hx-swap="innerHTML scroll:window:top">
+                                        ✅ Al día
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" 
+                                       href="#" 
+                                       hx-get="{% url 'dashboard' %}?estado=vencido"
+                                       hx-target="#clientes-container"
+                                       hx-include="#form-filtros"
+                                       hx-swap="innerHTML scroll:window:top">
+                                        ❌ Vencido
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" 
+                                       href="#" 
+                                       hx-get="{% url 'dashboard' %}?estado=pendiente"
+                                       hx-target="#clientes-container"
+                                       hx-include="#form-filtros"
+                                       hx-swap="innerHTML scroll:window:top">
+                                        ⚠️ Pendiente
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                     
-                    <!-- Botón limpiar -->
+                    <!-- Botones -->
                     <div class="col-md-3 d-flex align-items-end gap-2">
-                        <button type="button" id="btn-limpiar" class="btn btn-outline-secondary w-100">
+                        <button type="button" 
+                                id="btn-limpiar" 
+                                class="btn btn-outline-secondary w-100"
+                                onclick="document.getElementById('id_busqueda').value = ''"
+                                hx-get="{% url 'dashboard' %}"
+                                hx-target="#clientes-container"
+                                hx-include="closest form">
                             🔄 Limpiar
                         </button>
                         <button type="button"
-                                class="btn btn-success w-100"
+                                class="btn btn-success w-100 position-relative"
                                 hx-get="{% url 'crear_cliente' %}"
                                 hx-target="#modal-container">
                             ➕ Nuevo
+                            <!-- Spinner en el botón nuevo -->
+                            <span class="htmx-indicator position-absolute top-50 start-50 translate-middle">
+                                <span class="spinner-border spinner-border-sm" role="status"></span>
+                            </span>
                         </button>
                     </div>
                 </div>
@@ -69,92 +145,73 @@
     </div>
 
     <!-- CONTENEDOR DE CLIENTES -->
-    <div id="clientes-container">
+    <div id="clientes-container" class="fade-in">
         {% include 'clientes/_tabla_clientes.html' %}
     </div>
 
-     <!-- CONTENEDOR DE MODAL -->
-    <div id="modal-container"></div>
+    <!-- Modal Shell estático -->
+    <div class="modal fade" id="modal-shell" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog" id="modal-dialog">
+            <div id="modal-container"></div>
+        </div>
+    </div>
 
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const formFiltros = document.getElementById('form-filtros');
-    const turnoHidden = document.getElementById('turno-hidden');
-    const inputBusqueda = document.getElementById('id_busqueda');
-    const selectEstado = document.getElementById('id_estado');
-    const btnLimpiar = document.getElementById('btn-limpiar');
-    const container = document.getElementById('clientes-container');
-    
-    let timeoutBusqueda;
-    
-    // Actualizar turno hidden cuando se hace click en tab
-    document.getElementById('tabs-turnos').addEventListener('click', function(e) {
-        if (e.target.tagName === 'A' && e.target.dataset.turnoId) {
-            turnoHidden.value = e.target.dataset.turnoId;
-        }
-    });
-    
-    // Búsqueda con delay
-    inputBusqueda.addEventListener('input', function() {
-        clearTimeout(timeoutBusqueda);
-        timeoutBusqueda = setTimeout(function() {
-            aplicarFiltros();
-        }, 300);
-    });
-    
-    // Estado sin delay
-    selectEstado.addEventListener('change', function() {
-        aplicarFiltros();
-    });
-    
-    // Limpiar filtros
-    btnLimpiar.addEventListener('click', function() {
-        inputBusqueda.value = '';
-        selectEstado.value = '';
-        aplicarFiltros();
-    });
-    
-    function aplicarFiltros() {
-        const formData = new FormData(formFiltros);
-        const params = new URLSearchParams(formData);
-        
-        fetch('?' + params.toString(), {
-            headers: {
-                'HX-Request': 'true'
-            }
-        })
-        .then(response => response.text())
-        .then(html => {
-            container.innerHTML = html;
-            htmx.process(container);
-        });
-    }
-
-    // Cerrar modal y refrescar tabla cuando se registra o borra un pago
-    document.body.addEventListener('pagoActualizado', function() {
-    document.getElementById('modal-container').innerHTML = '';
-    aplicarFiltros();
-});
-    document.body.addEventListener('clienteActualizado', function() {
-    document.getElementById('modal-container').innerHTML = '';
-    aplicarFiltros();
-});
-});
+  
+// 1. Manejo visual de las Tabs
 function marcarTabActivo(elemento) {
-    // Quitar active de todos
+    document.getElementById('clientes-container').style.opacity = '0.5';
     document.querySelectorAll('#tabs-turnos .nav-link').forEach(function(link) {
         link.classList.remove('active', 'fw-bold');
     });
-    // Agregar active al clickeado
     elemento.classList.add('active', 'fw-bold');
-    
-    // Actualizar turno hidden
-    turnoHidden.value = elemento.dataset.turnoId;
+
+    // Actualizar el campo oculto con el turno seleccionado
+    const turnoId = elemento.dataset.turnoId;
+    document.getElementById('turno-hidden').value = turnoId;
 }
 
+// Restaurar opacidad
+document.body.addEventListener('htmx:afterSwap', function(evt) {
+    if(evt.detail.target.id === 'clientes-container') {
+        evt.detail.target.style.opacity = '1';
+    }
+});
+
+// 2. FUNCIÓN ROBUSTA DE RECARGA
+// Lee todos los filtros activos (Turno, Búsqueda, Estado) y pide al servidor una tabla nueva.
+function recargarTabla() {
+    const form = document.getElementById('form-filtros');
+    if (!form) return;
+
+    // Convertimos el formulario a parámetros URL (ej: ?turno=2&busqueda=Juan)
+    const params = new URLSearchParams(new FormData(form));
+    
+    // Hacemos la petición HTMX manualmente
+    htmx.ajax('GET', "{% url 'dashboard' %}?" + params.toString(), {
+        target: '#clientes-container'
+    });
+}
+
+// 3. EVENTOS DE ACTUALIZACIÓN
+// Escuchan cuando se guardan datos, muestran toast y REFRESCAN LA TABLA
+document.body.addEventListener('pagoActualizado', function() {
+    window.showToast('Pago registrado correctamente', 'success');
+    recargarTabla(); // AQUI ESTA LA MAGIA: Recarga el estado
+});
+
+document.body.addEventListener('clienteActualizado', function() {
+    window.showToast('Cliente guardado', 'success');
+    recargarTabla();
+});
+
+document.body.addEventListener('clienteBorrado', function() {
+    window.showToast('Cliente eliminado', 'error');
+    recargarTabla();
+});
 </script>
 {% endblock %}

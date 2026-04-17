@@ -39,7 +39,7 @@ def dashboard(request):
     clientes_qs = Cliente.objects.filter(activo=True)
 
     # Filtrar por turno
-    if turno_actual:
+    if turno_actual and not busqueda:
         clientes_qs = clientes_qs.filter(turno=turno_actual)
 
     # Aplicar búsqueda (nombre O apellido)

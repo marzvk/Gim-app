@@ -1,0 +1,191 @@
+/* Spinner de carga global */
+#global-spinner {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 9999;
+    display: none;
+    /* Oculto por defecto */
+    background: rgba(255, 255, 255, 0.8);
+    padding: 20px;
+    border-radius: 50%;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Clase utilitaria de HTMX: cuando htmx hace request, esto se muestra */
+.htmx-request .htmx-indicator {
+    display: inline-block !important;
+}
+
+/* Por defecto ocultamos los indicadores */
+.htmx-indicator {
+    display: none;
+}
+
+/* Pequeño ajuste para el spinner dentro de inputs */
+.input-spinner {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 5;
+}
+
+.navbar-custom {
+    /* Gradiente azul como en el primer diseño */
+    background: linear-gradient(90deg, #2563eb, #1d4ed8) !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    padding: 0.8rem 1rem;
+    min-height: 70px;
+    /* Altura cómoda */
+}
+
+.navbar-brand {
+    font-weight: 700;
+    color: #ffffff !important;
+    font-size: 1.25rem;
+    letter-spacing: -0.5px;
+}
+
+/* Contenedor derecho alineado y con espacio */
+.nav-right-container {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    /* Espacio elegante entre elementos */
+}
+
+/* Grupo de Usuario (Icono + Nombre) */
+.user-info-group {
+    display: flex;
+    align-items: center;
+    color: #ffffff;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+/* Icono de usuario grande y visible sobre el azul */
+.user-info-group i {
+    font-size: 1.4rem;
+    margin-right: 0.5rem;
+    color: #ffffff;
+    /* Asegura contraste */
+}
+
+/* Badges redondeados (Pastillas) */
+.badge-custom {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.35em 0.65em;
+    margin-left: 0.5rem;
+    text-transform: uppercase;
+    border-radius: 50px;
+    /* Pill shape */
+    letter-spacing: 0.5px;
+}
+
+.badge-owner {
+    background-color: #f59e0b;
+    color: #000;
+}
+
+.badge-trainer {
+    background-color: #e5e7eb;
+    color: #000;
+}
+
+/* Botones de Acción (Reportes, Logout) */
+.btn-action {
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    background-color: transparent;
+    font-size: 0.9rem;
+    /* Mismo tamaño que el usuario */
+    font-weight: 500;
+    padding: 0.4rem 1rem;
+    border-radius: 50px;
+    /* Bordes redondos */
+    transition: all 0.2s ease-in-out;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+}
+
+.btn-action:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-color: #fff;
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Ajuste para que el botón dentro del form no herede estilos raros */
+.btn-action[type="submit"] {
+    cursor: pointer;
+    margin: 0;
+    line-height: normal;
+}
+
+/* Separador sutil entre usuario y botones */
+.nav-divider {
+    width: 1px;
+    height: 24px;
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+/* --- RESPONSIVE (PANTALLAS CHICAS / MÓVILES) --- */
+@media (max-width: 991.98px) {
+
+    /* Reducimos el espacio entre los elementos del menú derecho */
+    .nav-right-container {
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        /* Permite que bajen de línea si es estrictamente necesario */
+        justify-content: flex-end;
+        /* Mantiene todo alineado a la derecha */
+    }
+
+    /* Ajustes de la información del usuario para que ocupe menos ancho */
+    .user-info-group {
+        font-size: 0.85rem;
+    }
+
+    /* Icono de usuario un poco más chico en móvil */
+    .user-info-group i {
+        font-size: 1.2rem;
+        margin-right: 0.25rem;
+    }
+
+    /* Badge más pequeño */
+    .badge-custom {
+        font-size: 0.6rem;
+        padding: 0.2em 0.5em;
+        margin-left: 0.25rem;
+    }
+
+    /* TRUCO: Ocultamos el texto de los botones y dejamos solo el icono */
+    .btn-action span {
+        display: none !important;
+    }
+
+    /* Estilo de los botones en móvil (solo iconos, circulares) */
+    .btn-action {
+        padding: 0.5rem;
+        width: 40px;
+        /* Ancho fijo para que sean cuadrados perfectos */
+        height: 40px;
+        justify-content: center;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        /* Círculos perfectos */
+    }
+
+    /* Aseguramos que el botón de Dark Mode se vea bien y no se salga */
+    #theme-toggle {
+        margin-left: 0.25rem;
+        font-size: 1.2rem;
+        padding: 0.4rem;
+    }
+}

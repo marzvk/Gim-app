@@ -14,25 +14,34 @@
 <!-- Tabla de clientes -->
 {% if clientes %}
 <div class="table-responsive">
-    <table class="table table-hover">
+    <table class="table table-hover table-sm">
         <thead class="table-light">
             <tr>
-                <th>Apellido</th>
-                <th>Nombre</th>
-                <th>Plan</th>
-                <th>Teléfono</th>
-                <th>Estado</th>
-                <th>Acciones</th>
+                <th class="text-nowrap">Apellido</th>
+                <th class="text-nowrap">Nombre</th>
+                <!-- Ocultamos Plan en móviles/tablets pequeñas -->
+                <th class="text-nowrap d-none d-md-table-cell">Plan</th>
+                <!-- Ocultamos Teléfono en móviles/tablets pequeñas -->
+                <th class="text-nowrap d-none d-md-table-cell">Teléfono</th>
+                <th class="text-nowrap">Estado</th>
+                <th class="text-nowrap">Acciones</th>
             </tr>
         </thead>
         <tbody>
             {% for cliente in clientes %}
             <tr>
-                <td>{{ cliente.apellido }}</td>
-                <td>{{ cliente.nombre }}</td>
-                <td>{{ cliente.plan.nombre }}</td>
-                <td>{{ cliente.telefono|default:"-" }}</td>
-                <td>
+                <td class="text-nowrap">{{ cliente.apellido }}</td>
+                <td class="text-nowrap">{{ cliente.nombre }}</td>
+                
+                <!-- Ocultamos Plan en móviles/tablets pequeñas -->
+                <td class="d-none d-md-table-cell">
+                    {{ cliente.plan.nombre }}
+                </td>
+                <!-- Ocultamos Teléfono en móviles/tablets pequeñas -->
+                <td class="d-none d-md-table-cell text-nowrap">{{ cliente.telefono|default:"-" }}</td>
+                
+                <!-- Estado -->
+                <td class="text-nowrap">
                     {% if cliente.estado_actual == 'al_dia' %}
                         <span class="badge bg-success">✅ Al día</span>
                     {% elif cliente.estado_actual == 'vencido' %}
@@ -43,8 +52,11 @@
                         <span class="badge bg-secondary">🚫 Inactivo</span>
                     {% endif %}
                 </td>
-                <td>
-                    <button class="btn btn-sm btn-outline-primary me-1"
+
+                <!-- Acciones -->
+                <td class="text-nowrap">
+                    <div class="btn-group" role="group">
+                    <button class="btn btn-sm btn-outline-primary"
                             hx-get="{% url 'modal_historial' cliente.id %}"
                             hx-target="#modal-container"
                             title="Ver historial">
@@ -56,7 +68,7 @@
                             title="Registrar pago">
                         💰
                     </button>
-                    <button class="btn btn-sm btn-outline-secondary me-1"
+                    <button class="btn btn-sm btn-outline-secondary"
                             hx-get="{% url 'editar_cliente' cliente.id %}"
                             hx-target="#modal-container"
                             title="Editar cliente">
