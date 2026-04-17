@@ -1,0 +1,24 @@
+{% if resultado %}
+<div class="alert alert-success mt-3">
+    <h6>✅ Importación completada</h6>
+    <ul class="mb-0">
+        <li>Clientes creados: <strong>{{ resultado.clientes_creados }}</strong></li>
+        <li>Clientes saltados: <strong>{{ resultado.clientes_saltados }}</strong></li>
+        <li>Pagos creados: <strong>{{ resultado.pagos_creados }}</strong></li>
+        <li>Pagos saltados: <strong>{{ resultado.pagos_saltados }}</strong></li>
+    </ul>
+</div>
+{% elif error %}
+<div class="alert alert-danger mt-3">
+    ❌ {{ error }}
+</div>
+{% endif %}
+
+<form method="post" enctype="multipart/form-data" action="{% url 'importar_xml' %}">
+    {% csrf_token %}
+    <div class="mb-3">
+        <label class="form-label">Seleccioná el archivo XML</label>
+        <input type="file" name="archivo" accept=".xml" class="form-control">
+    </div>
+    <button type="submit" class="btn btn-primary">📤 Importar</button>
+</form>

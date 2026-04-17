@@ -1,0 +1,37 @@
+{% if resultado %}
+<div class="alert alert-success mt-3">
+    <h6>✅ Importación completada</h6>
+    <ul class="mb-0">
+        <li>Clientes creados: <strong>{{ resultado.clientes_creados }}</strong></li>
+        <li>Clientes saltados: <strong>{{ resultado.clientes_saltados }}</strong></li>
+        <li>Pagos creados: <strong>{{ resultado.pagos_creados }}</strong></li>
+        <li>Pagos saltados: <strong>{{ resultado.pagos_saltados }}</strong></li>
+    </ul>
+</div>
+{% endif %}
+
+{% if errores %}
+<div class="alert alert-warning mt-2">
+    <h6>⚠️ Advertencias</h6>
+    <ul class="mb-0">
+        {% for error in errores %}
+            <li>{{ error }}</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+{% if error %}
+<div class="alert alert-danger mt-3">
+    ❌ {{ error }}
+</div>
+{% endif %}
+
+<form method="post" enctype="multipart/form-data" action="{% url 'importar_excel' %}">
+    {% csrf_token %}
+    <div class="mb-3">
+        <label class="form-label">Seleccioná el archivo Excel</label>
+        <input type="file" name="archivo" accept=".xlsx" class="form-control">
+    </div>
+    <button type="submit" class="btn btn-primary">📤 Importar</button>
+</form>
