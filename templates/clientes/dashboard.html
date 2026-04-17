@@ -54,22 +54,66 @@
                         </div>
                     </div>
                     
-                    <!-- Filtro por estado -->
+                    <!-- Filtro por estado (Dropdown) -->
                     <div class="col-md-3">
-                        <label for="id_estado" class="form-label">Filtrar por estado</label>
-                        <select class="form-select" id="id_estado" name="estado"
-                                hx-get="{% url 'dashboard' %}"
-                                hx-target="#clientes-container"
-                                hx-trigger="change"
-                                hx-include="#form-filtros"
-                                hx-indicator="#estado-spinner">
-                            <option value="">Todos</option>
-                            <option value="al_dia" {% if filtro_estado == 'al_dia' %}selected{% endif %}>✅ Al día</option>
-                            <option value="vencido" {% if filtro_estado == 'vencido' %}selected{% endif %}>❌ Vencido</option>
-                            <option value="pendiente" {% if filtro_estado == 'pendiente' %}selected{% endif %}>⚠️ Pendiente</option>
-                        </select>
-                         <div id="estado-spinner" class="htmx-indicator input-spinner text-muted">
-                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        <label class="form-label">Filtrar por estado</label>
+                        <div class="dropdown w-100">
+                            <!-- El botón muestra el estado seleccionado actual -->
+                            <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start d-flex justify-content-between align-items-center" 
+                                    type="button" 
+                                    data-bs-toggle="dropdown" 
+                                    aria-expanded="false">
+                                <span>
+                                    Estado: 
+                                    {% if filtro_estado == 'al_dia' %}✅ Al día
+                                    {% elif filtro_estado == 'vencido' %}❌ Vencido
+                                    {% elif filtro_estado == 'pendiente' %}⚠️ Pendiente
+                                    {% else %}Todos{% endif %}
+                                </span>
+                            </button>
+
+                            <ul class="dropdown-menu w-100 shadow">
+                                <li>
+                                    <a class="dropdown-item" 
+                                       href="#" 
+                                       hx-get="{% url 'dashboard' %}?estado="
+                                       hx-target="#clientes-container"
+                                       hx-include="#form-filtros"
+                                       hx-swap="innerHTML scroll:window:top">
+                                        🟣 Todos
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" 
+                                       href="#" 
+                                       hx-get="{% url 'dashboard' %}?estado=al_dia"
+                                       hx-target="#clientes-container"
+                                       hx-include="#form-filtros"
+                                       hx-swap="innerHTML scroll:window:top">
+                                        ✅ Al día
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" 
+                                       href="#" 
+                                       hx-get="{% url 'dashboard' %}?estado=vencido"
+                                       hx-target="#clientes-container"
+                                       hx-include="#form-filtros"
+                                       hx-swap="innerHTML scroll:window:top">
+                                        ❌ Vencido
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" 
+                                       href="#" 
+                                       hx-get="{% url 'dashboard' %}?estado=pendiente"
+                                       hx-target="#clientes-container"
+                                       hx-include="#form-filtros"
+                                       hx-swap="innerHTML scroll:window:top">
+                                        ⚠️ Pendiente
+                                    </a>
+                                </li>
+                            </ul>
                         </div>
                     </div>
                     
@@ -78,6 +122,7 @@
                         <button type="button" 
                                 id="btn-limpiar" 
                                 class="btn btn-outline-secondary w-100"
+                                onclick="document.getElementById('id_busqueda').value = ''"
                                 hx-get="{% url 'dashboard' %}"
                                 hx-target="#clientes-container"
                                 hx-include="closest form">
