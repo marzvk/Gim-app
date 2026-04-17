@@ -481,3 +481,179 @@ def exportar_excel(request):
     response["Content-Disposition"] = 'attachment; filename="gimnasio_backup.xlsx"'
     wb.save(response)
     return response
+
+
+@login_required
+def importar_excel(request):
+    if request.user.rol != "dueño":
+        return HttpResponseForbidden()
+
+    if request.method != "POST":
+        return render(request, "clientes/_importar_excel.html")
+
+    from openpyxl import load_workbook
+    from apps.pagos.models import Pago
+    from apps.usuarios.models import Turno
+    from apps.clientes.models import Plan
+    from datetime import date
+
+    archivo = request.FILES.get("archivo")
+    if not archivo:
+        return render(
+            request,
+            "clientes/_importar_excel.html",
+            {"error": "No se seleccionó archivo"},
+        )
+
+    try:
+        wb = load_workbook(archivo)
+    except Exception:
+        return render(
+            request,
+            "clientes/_importar_excel.html",
+            {"error": "El archivo no es un Excel válido"},
+        )
+
+    clientes_creados = 0
+    clientes_saltados = 0
+    pagos_creados = 0
+    pagos_saltados = 0
+    errores = []
+
+    # ── Hoja Clientes ─────────────────────────────────────────────────────────
+    if "Clientes" not in wb.sheetnames:
+        return render(
+            request,
+            "clientes/_importar_excel.html",
+            {"error": "El archivo no tiene hoja 'Clientes'"},
+        )
+
+    ws_clientes = wb["Clientes"]
+    mapa_clientes = {}
+
+    for i, row in enumerate(
+        ws_clientes.iter_rows(min_row=2, values_only=True), start=2
+    ):
+        if not any(row):
+            continue
+
+        (
+            id_excel,
+            apellido,
+            nombre,
+            plan_codigo,
+            turno_nombre,
+            telefono,
+            email,
+            activo,
+        ) = row
+
+        plan = Plan.objects.filter(codigo=plan_codigo).first()
+        turno = Turno.objects.filter(nombre=turno_nombre).first()
+
+        if not plan:
+            errores.append(f"Fila {i} (Clientes): plan '{plan_codigo}' no existe")
+            clientes_saltados += 1
+            continue
+
+        if not turno:
+            errores.append(f"Fila {i} (Clientes): turno '{turno_nombre}' no existe")
+            clientes_saltados += 1
+            continue
+
+        existente = Cliente.objects.filter(
+            nombre=nombre, apellido=apellido, turno=turno
+        ).first()
+
+        if existente:
+            mapa_clientes[id_excel] = existente
+            clientes_saltados += 1
+            continue
+
+        cliente = Cliente.objects.create(
+            nombre=nombre,
+            apellido=apellido,
+            telefono=str(telefono) if telefono else "",
+            email=email or "",
+            plan=plan,
+            turno=turno,
+            activo=activo == "Sí",
+            usuario_creador=request.user,
+        )
+        mapa_clientes[id_excel] = cliente
+        clientes_creados += 1
+
+    # ── Hoja Pagos ────────────────────────────────────────────────────────────
+    if "Pagos" in wb.sheetnames:
+        ws_pagos = wb["Pagos"]
+
+        for i, row in enumerate(
+            ws_pagos.iter_rows(min_row=2, values_only=True), start=2
+        ):
+            if not any(row):
+                continue
+
+            (
+                id_excel,
+                cliente_id_excel,
+                apellido,
+                nombre,
+                fecha_pago_str,
+                mes_cubierto_str,
+                monto,
+                observaciones,
+            ) = row
+
+            cliente = mapa_clientes.get(cliente_id_excel)
+            if not cliente:
+                pagos_saltados += 1
+                continue
+
+            try:
+                if isinstance(fecha_pago_str, str):
+                    from datetime import datetime
+
+                    fecha_pago = datetime.strptime(fecha_pago_str, "%d/%m/%Y").date()
+                else:
+                    fecha_pago = fecha_pago_str
+
+                if isinstance(mes_cubierto_str, str):
+                    mes_cubierto = (
+                        datetime.strptime(mes_cubierto_str, "%m/%Y")
+                        .date()
+                        .replace(day=1)
+                    )
+                else:
+                    mes_cubierto = mes_cubierto_str.replace(day=1)
+            except (ValueError, TypeError, AttributeError):
+                errores.append(f"Fila {i} (Pagos): fecha inválida")
+                pagos_saltados += 1
+                continue
+
+            if Pago.objects.filter(cliente=cliente, mes_cubierto=mes_cubierto).exists():
+                pagos_saltados += 1
+                continue
+
+            Pago.objects.create(
+                cliente=cliente,
+                fecha_pago=fecha_pago,
+                mes_cubierto=mes_cubierto,
+                monto=monto or 0,
+                observaciones=observaciones or "",
+                usuario_registrador=request.user,
+            )
+            pagos_creados += 1
+
+    return render(
+        request,
+        "clientes/_importar_excel.html",
+        {
+            "resultado": {
+                "clientes_creados": clientes_creados,
+                "clientes_saltados": clientes_saltados,
+                "pagos_creados": pagos_creados,
+                "pagos_saltados": pagos_saltados,
+            },
+            "errores": errores,
+        },
+    )

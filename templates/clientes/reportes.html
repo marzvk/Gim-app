@@ -8,8 +8,9 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>📊 Reportes — {{ mes_actual|date:"F Y" }}</h2>
 
-        <!-- Seccion Exportar -->
+        
         <div class="d-flex gap-2">
+            <!-- Seccion Exportar -->
             <a href="{% url 'exportar_xml' %}" class="btn btn-outline-primary">
                 📥 Exportar XML
             </a>
@@ -23,6 +24,12 @@
                     hx-target="#importar-container">
                 📤 Importar XML
             </button>
+            <button class="btn btn-outline-warning"
+                    hx-get="{% url 'importar_excel' %}"
+                    hx-target="#importar-container">
+                📤 Importar Excel
+            </button>
+
             <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">← Volver</a>
         </div>
 
