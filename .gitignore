@@ -21,6 +21,7 @@ db.sqlite3-journal
 # Archivos estáticos y medios (opcional, según tu flujo)
 static_cdn/
 media/
+staticfiles/
 
 # Archivos del IDE (VS Code, PyCharm)
 .vscode/
