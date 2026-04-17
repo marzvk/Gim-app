@@ -657,3 +657,240 @@ def importar_excel(request):
             "errores": errores,
         },
     )
+
+
+# *********************************
+# VISTAS EXPORT/IMPORT DATOS A CSV
+# *********************************
+
+
+@login_required
+def exportar_csv(request):
+    if request.user.rol != "dueño":
+        return HttpResponseForbidden()
+
+    import csv
+    from apps.pagos.models import Pago
+    from django.http import HttpResponse
+
+    response = HttpResponse(content_type="text/csv; charset=utf-8")
+    response["Content-Disposition"] = 'attachment; filename="gimnasio_backup.csv"'
+    response.write("\ufeff")  # BOM para que Excel lo abra bien
+
+    writer = csv.writer(response)
+
+    # Clientes
+    writer.writerow(["## CLIENTES"])
+    writer.writerow(
+        ["ID", "Apellido", "Nombre", "Plan", "Turno", "Teléfono", "Email", "Activo"]
+    )
+    for cliente in Cliente.objects.select_related("plan", "turno").all():
+        writer.writerow(
+            [
+                cliente.id,
+                cliente.apellido,
+                cliente.nombre,
+                cliente.plan.codigo,
+                cliente.turno.nombre,
+                cliente.telefono or "",
+                cliente.email or "",
+                "Sí" if cliente.activo else "No",
+            ]
+        )
+
+    # Separador
+    writer.writerow([])
+    writer.writerow(["## PAGOS"])
+    writer.writerow(
+        [
+            "ID",
+            "Cliente ID",
+            "Apellido",
+            "Nombre",
+            "Fecha Pago",
+            "Mes Cubierto",
+            "Monto",
+            "Observaciones",
+        ]
+    )
+    for pago in Pago.objects.select_related("cliente").all():
+        writer.writerow(
+            [
+                pago.id,
+                pago.cliente.id,
+                pago.cliente.apellido,
+                pago.cliente.nombre,
+                pago.fecha_pago.strftime("%d/%m/%Y"),
+                pago.mes_cubierto.strftime("%m/%Y"),
+                float(pago.monto),
+                pago.observaciones or "",
+            ]
+        )
+
+    return response
+
+
+@login_required
+def importar_csv(request):
+    if request.user.rol != "dueño":
+        return HttpResponseForbidden()
+
+    if request.method != "POST":
+        return render(request, "clientes/_importar_csv.html")
+
+    import csv
+    from apps.pagos.models import Pago
+    from apps.usuarios.models import Turno
+    from apps.clientes.models import Plan
+    from datetime import datetime
+
+    archivo = request.FILES.get("archivo")
+    if not archivo:
+        return render(
+            request,
+            "clientes/_importar_csv.html",
+            {"error": "No se seleccionó archivo"},
+        )
+
+    try:
+        contenido = archivo.read().decode("utf-8-sig")
+        lines = contenido.splitlines()
+        reader = csv.reader(lines)
+    except Exception:
+        return render(
+            request,
+            "clientes/_importar_csv.html",
+            {"error": "El archivo no es un CSV válido"},
+        )
+
+    clientes_creados = 0
+    clientes_saltados = 0
+    pagos_creados = 0
+    pagos_saltados = 0
+    errores = []
+    mapa_clientes = {}
+
+    seccion = None
+
+    for i, row in enumerate(reader, start=1):
+        if not any(row):
+            continue
+
+        if row[0] == "## CLIENTES":
+            seccion = "clientes"
+            continue
+        if row[0] == "## PAGOS":
+            seccion = "pagos"
+            continue
+        if row[0] in ["ID", "Apellido"]:
+            continue
+
+        if seccion == "clientes":
+            if len(row) < 8:
+                errores.append(f"Fila {i}: datos incompletos")
+                continue
+
+            (
+                id_csv,
+                apellido,
+                nombre,
+                plan_codigo,
+                turno_nombre,
+                telefono,
+                email,
+                activo,
+            ) = row[:8]
+
+            plan = Plan.objects.filter(codigo=plan_codigo).first()
+            turno = Turno.objects.filter(nombre=turno_nombre).first()
+
+            if not plan:
+                errores.append(f"Fila {i}: plan '{plan_codigo}' no existe")
+                clientes_saltados += 1
+                continue
+
+            if not turno:
+                errores.append(f"Fila {i}: turno '{turno_nombre}' no existe")
+                clientes_saltados += 1
+                continue
+
+            existente = Cliente.objects.filter(
+                nombre=nombre, apellido=apellido, turno=turno
+            ).first()
+
+            if existente:
+                mapa_clientes[id_csv] = existente
+                clientes_saltados += 1
+                continue
+
+            cliente = Cliente.objects.create(
+                nombre=nombre,
+                apellido=apellido,
+                telefono=telefono or "",
+                email=email or "",
+                plan=plan,
+                turno=turno,
+                activo=activo == "Sí",
+                usuario_creador=request.user,
+            )
+            mapa_clientes[id_csv] = cliente
+            clientes_creados += 1
+
+        elif seccion == "pagos":
+            if len(row) < 8:
+                errores.append(f"Fila {i}: datos incompletos")
+                continue
+
+            (
+                id_csv,
+                cliente_id_csv,
+                apellido,
+                nombre,
+                fecha_pago_str,
+                mes_cubierto_str,
+                monto,
+                observaciones,
+            ) = row[:8]
+
+            cliente = mapa_clientes.get(cliente_id_csv)
+            if not cliente:
+                pagos_saltados += 1
+                continue
+
+            try:
+                fecha_pago = datetime.strptime(fecha_pago_str, "%d/%m/%Y").date()
+                mes_cubierto = (
+                    datetime.strptime(mes_cubierto_str, "%m/%Y").date().replace(day=1)
+                )
+            except ValueError:
+                errores.append(f"Fila {i}: fecha inválida")
+                pagos_saltados += 1
+                continue
+
+            if Pago.objects.filter(cliente=cliente, mes_cubierto=mes_cubierto).exists():
+                pagos_saltados += 1
+                continue
+
+            Pago.objects.create(
+                cliente=cliente,
+                fecha_pago=fecha_pago,
+                mes_cubierto=mes_cubierto,
+                monto=monto or 0,
+                observaciones=observaciones or "",
+                usuario_registrador=request.user,
+            )
+            pagos_creados += 1
+
+    return render(
+        request,
+        "clientes/_importar_csv.html",
+        {
+            "resultado": {
+                "clientes_creados": clientes_creados,
+                "clientes_saltados": clientes_saltados,
+                "pagos_creados": pagos_creados,
+                "pagos_saltados": pagos_saltados,
+            },
+            "errores": errores,
+        },
+    )

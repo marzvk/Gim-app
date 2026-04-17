@@ -17,4 +17,6 @@ urlpatterns = [
     path("importar/xml/", views.importar_xml, name="importar_xml"),
     path("exportar/excel/", views.exportar_excel, name="exportar_excel"),
     path("importar/excel/", views.importar_excel, name="importar_excel"),
+    path("exportar/csv/", views.exportar_csv, name="exportar_csv"),
+    path("importar/csv/", views.importar_csv, name="importar_csv"),
 ]
