@@ -374,3 +374,110 @@ def importar_xml(request):
             }
         },
     )
+
+
+# *******************************
+# VISTAS EXPORT/IMPORT DATOS EXCEL
+# *******************************
+
+
+@login_required
+def exportar_excel(request):
+    if request.user.rol != "dueño":
+        return HttpResponseForbidden()
+
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment
+    from apps.pagos.models import Pago
+    from django.http import HttpResponse
+
+    wb = Workbook()
+
+    # ── Hoja 1: Clientes ──────────────────────────────────────────────────────
+    ws_clientes = wb.active
+    ws_clientes.title = "Clientes"
+
+    headers_clientes = [
+        "ID",
+        "Apellido",
+        "Nombre",
+        "Plan",
+        "Turno",
+        "Teléfono",
+        "Email",
+        "Activo",
+    ]
+    ws_clientes.append(headers_clientes)
+
+    # Estilo encabezado
+    for col in range(1, len(headers_clientes) + 1):
+        cell = ws_clientes.cell(row=1, column=col)
+        cell.font = Font(bold=True, color="FFFFFF")
+        cell.fill = PatternFill("solid", fgColor="2563EB")
+        cell.alignment = Alignment(horizontal="center")
+
+    for cliente in Cliente.objects.select_related("plan", "turno").all():
+        ws_clientes.append(
+            [
+                cliente.id,
+                cliente.apellido,
+                cliente.nombre,
+                cliente.plan.codigo,
+                cliente.turno.nombre,
+                cliente.telefono or "",
+                cliente.email or "",
+                "Sí" if cliente.activo else "No",
+            ]
+        )
+
+    # Ancho de columnas automático
+    for col in ws_clientes.columns:
+        max_len = max(len(str(cell.value or "")) for cell in col)
+        ws_clientes.column_dimensions[col[0].column_letter].width = max_len + 4
+
+    # ── Hoja 2: Pagos ─────────────────────────────────────────────────────────
+    ws_pagos = wb.create_sheet("Pagos")
+
+    headers_pagos = [
+        "ID",
+        "Cliente ID",
+        "Apellido",
+        "Nombre",
+        "Fecha Pago",
+        "Mes Cubierto",
+        "Monto",
+        "Observaciones",
+    ]
+    ws_pagos.append(headers_pagos)
+
+    for col in range(1, len(headers_pagos) + 1):
+        cell = ws_pagos.cell(row=1, column=col)
+        cell.font = Font(bold=True, color="FFFFFF")
+        cell.fill = PatternFill("solid", fgColor="2563EB")
+        cell.alignment = Alignment(horizontal="center")
+
+    for pago in Pago.objects.select_related("cliente").all():
+        ws_pagos.append(
+            [
+                pago.id,
+                pago.cliente.id,
+                pago.cliente.apellido,
+                pago.cliente.nombre,
+                pago.fecha_pago.strftime("%d/%m/%Y"),
+                pago.mes_cubierto.strftime("%m/%Y"),
+                float(pago.monto),
+                pago.observaciones or "",
+            ]
+        )
+
+    for col in ws_pagos.columns:
+        max_len = max(len(str(cell.value or "")) for cell in col)
+        ws_pagos.column_dimensions[col[0].column_letter].width = max_len + 4
+
+    # ── Respuesta ─────────────────────────────────────────────────────────────
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = 'attachment; filename="gimnasio_backup.xlsx"'
+    wb.save(response)
+    return response
