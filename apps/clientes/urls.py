@@ -13,4 +13,5 @@ urlpatterns = [
         "cliente/<int:cliente_id>/editar/", views.editar_cliente, name="editar_cliente"
     ),
     path("reportes/", views.reportes, name="reportes"),
+    path("exportar/xml/", views.exportar_xml, name="exportar_xml"),
 ]

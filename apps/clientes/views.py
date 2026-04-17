@@ -199,3 +199,52 @@ def reportes(request):
             "mes_actual": mes_actual,
         },
     )
+
+
+# *****************************
+# VISTAS EXPORT/IMPORT DATOS
+# *****************************
+
+
+@login_required
+def exportar_xml(request):
+    if request.user.rol != "dueño":
+        return HttpResponseForbidden()
+
+    from django.http import HttpResponse
+    from apps.pagos.models import Pago
+    import xml.etree.ElementTree as ET
+
+    root = ET.Element("gimnasio")
+
+    # Clientes
+    clientes_el = ET.SubElement(root, "clientes")
+    for cliente in Cliente.objects.select_related("plan", "turno").all():
+        c = ET.SubElement(clientes_el, "cliente")
+        ET.SubElement(c, "id").text = str(cliente.id)
+        ET.SubElement(c, "nombre").text = cliente.nombre
+        ET.SubElement(c, "apellido").text = cliente.apellido
+        ET.SubElement(c, "telefono").text = cliente.telefono or ""
+        ET.SubElement(c, "email").text = cliente.email or ""
+        ET.SubElement(c, "plan").text = cliente.plan.codigo
+        ET.SubElement(c, "turno").text = cliente.turno.nombre
+        ET.SubElement(c, "activo").text = str(cliente.activo)
+
+    # Pagos
+    pagos_el = ET.SubElement(root, "pagos")
+    for pago in Pago.objects.select_related("cliente").all():
+        p = ET.SubElement(pagos_el, "pago")
+        ET.SubElement(p, "id").text = str(pago.id)
+        ET.SubElement(p, "cliente_id").text = str(pago.cliente.id)
+        ET.SubElement(p, "fecha_pago").text = str(pago.fecha_pago)
+        ET.SubElement(p, "mes_cubierto").text = str(pago.mes_cubierto)
+        ET.SubElement(p, "monto").text = str(pago.monto)
+        ET.SubElement(p, "observaciones").text = pago.observaciones or ""
+
+    tree = ET.ElementTree(root)
+    ET.indent(tree, space="  ")
+
+    response = HttpResponse(content_type="application/xml")
+    response["Content-Disposition"] = 'attachment; filename="gimnasio_backup.xml"'
+    tree.write(response, encoding="unicode", xml_declaration=True)
+    return response
