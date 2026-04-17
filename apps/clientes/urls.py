@@ -14,4 +14,5 @@ urlpatterns = [
     ),
     path("reportes/", views.reportes, name="reportes"),
     path("exportar/xml/", views.exportar_xml, name="exportar_xml"),
+    path("importar/xml/", views.importar_xml, name="importar_xml"),
 ]

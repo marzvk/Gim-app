@@ -201,9 +201,9 @@ def reportes(request):
     )
 
 
-# *****************************
-# VISTAS EXPORT/IMPORT DATOS
-# *****************************
+# *******************************
+# VISTAS EXPORT/IMPORT DATOS XML
+# *******************************
 
 
 @login_required
@@ -248,3 +248,129 @@ def exportar_xml(request):
     response["Content-Disposition"] = 'attachment; filename="gimnasio_backup.xml"'
     tree.write(response, encoding="unicode", xml_declaration=True)
     return response
+
+
+@login_required
+def importar_xml(request):
+    if request.user.rol != "dueño":
+        return HttpResponseForbidden()
+
+    if request.method != "POST":
+        return render(request, "clientes/_importar_xml.html")
+
+    import xml.etree.ElementTree as ET
+    from apps.pagos.models import Pago
+    from datetime import date
+
+    archivo = request.FILES.get("archivo")
+    if not archivo:
+        return render(
+            request,
+            "clientes/_importar_xml.html",
+            {"error": "No se seleccionó archivo"},
+        )
+
+    try:
+        tree = ET.parse(archivo)
+        root = tree.getroot()
+    except ET.ParseError:
+        return render(
+            request,
+            "clientes/_importar_xml.html",
+            {"error": "El archivo no es un XML válido"},
+        )
+
+    from apps.usuarios.models import Turno
+    from apps.clientes.models import Plan
+
+    clientes_creados = 0
+    clientes_saltados = 0
+    pagos_creados = 0
+    pagos_saltados = 0
+
+    # Mapa id_xml → cliente nuevo (para los pagos)
+    mapa_clientes = {}
+
+    for c in root.findall("clientes/cliente"):
+        id_xml = c.findtext("id")
+        nombre = c.findtext("nombre")
+        apellido = c.findtext("apellido")
+
+        # Buscar plan y turno por codigo/nombre
+        plan = Plan.objects.filter(codigo=c.findtext("plan")).first()
+        turno = Turno.objects.filter(nombre=c.findtext("turno")).first()
+
+        if not plan or not turno:
+            clientes_saltados += 1
+            continue
+
+        # Buscar si ya existe un cliente con mismo nombre, apellido y turno
+        existente = Cliente.objects.filter(
+            nombre=nombre, apellido=apellido, turno=turno
+        ).first()
+
+        if existente:
+            mapa_clientes[id_xml] = existente
+            clientes_saltados += 1
+            continue
+
+        cliente = Cliente.objects.create(
+            nombre=nombre,
+            apellido=apellido,
+            telefono=c.findtext("telefono") or "",
+            email=c.findtext("email") or "",
+            plan=plan,
+            turno=turno,
+            activo=c.findtext("activo") == "True",
+            usuario_creador=request.user,
+        )
+        mapa_clientes[id_xml] = cliente
+        clientes_creados += 1
+
+    for p in root.findall("pagos/pago"):
+        cliente_id_xml = p.findtext("cliente_id")
+        cliente = mapa_clientes.get(cliente_id_xml)
+
+        if not cliente:
+            pagos_saltados += 1
+            continue
+
+        mes_cubierto_str = p.findtext("mes_cubierto")
+        fecha_pago_str = p.findtext("fecha_pago")
+
+        try:
+            mes_cubierto = date.fromisoformat(mes_cubierto_str)
+            # Normalizar a día 1
+            mes_cubierto = mes_cubierto.replace(day=1)
+            fecha_pago = date.fromisoformat(fecha_pago_str)
+        except (ValueError, TypeError):
+            pagos_saltados += 1
+            continue
+
+        # Saltar si ya existe pago para ese cliente y mes
+        if Pago.objects.filter(cliente=cliente, mes_cubierto=mes_cubierto).exists():
+            pagos_saltados += 1
+            continue
+
+        Pago.objects.create(
+            cliente=cliente,
+            fecha_pago=fecha_pago,
+            mes_cubierto=mes_cubierto,
+            monto=p.findtext("monto") or 0,
+            observaciones=p.findtext("observaciones") or "",
+            usuario_registrador=request.user,
+        )
+        pagos_creados += 1
+
+    return render(
+        request,
+        "clientes/_importar_xml.html",
+        {
+            "resultado": {
+                "clientes_creados": clientes_creados,
+                "clientes_saltados": clientes_saltados,
+                "pagos_creados": pagos_creados,
+                "pagos_saltados": pagos_saltados,
+            }
+        },
+    )
