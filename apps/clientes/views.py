@@ -162,11 +162,27 @@ def reportes(request):
 
     from apps.usuarios.models import Turno
     from apps.pagos.models import Pago
-    from django.db.models import Sum, Count
-    from datetime import date
+    from django.db.models import Sum
+    from datetime import date, datetime
+    from dateutil.relativedelta import relativedelta
 
     hoy = date.today()
-    mes_actual = hoy.replace(day=1)
+    mes_actual_real = hoy.replace(day=1)
+
+    # Leer mes desde query param, si no hay usar el actual
+    mes_param = request.GET.get("mes")
+    if mes_param:
+        try:
+            mes_actual = datetime.strptime(mes_param, "%Y-%m").date().replace(day=1)
+        except ValueError:
+            mes_actual = mes_actual_real
+    else:
+        mes_actual = mes_actual_real
+
+    mes_anterior = mes_actual - relativedelta(months=1)
+    mes_siguiente = mes_actual + relativedelta(months=1)
+    es_mes_actual = mes_actual == mes_actual_real
+
     turnos = Turno.objects.filter(activo=True).order_by("hora_inicio")
 
     datos_turnos = []
@@ -215,6 +231,9 @@ def reportes(request):
         {
             "datos_turnos": datos_turnos,
             "mes_actual": mes_actual,
+            "mes_anterior_param": mes_anterior.strftime("%Y-%m"),
+            "mes_siguiente_param": mes_siguiente.strftime("%Y-%m"),
+            "es_mes_actual": es_mes_actual,
         },
     )
 
