@@ -1,0 +1,25 @@
+<div class="modal-content">
+    <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title">🚫 Confirmar inactivación</h5>
+        <button type="button" class="btn-close btn-close-white close-modal"></button>
+    </div>
+
+    <div class="modal-body">
+        <p>¿Estás seguro de inactivar este cliente?</p>
+        <div class="alert alert-warning">
+            <strong>Cliente:</strong> {{ cliente.apellido }}, {{ cliente.nombre }}<br>
+            <strong>Plan:</strong> {{ cliente.plan.nombre }}<br>
+            <strong>Turno:</strong> {{ cliente.turno.nombre }}
+        </div>
+        <p class="text-muted small">El cliente se puede reactivar registrando un nuevo pago.</p>
+    </div>
+
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary close-modal">Cancelar</button>
+        <form hx-post="{% url 'confirmar_inactivar_cliente' cliente.id %}"
+              hx-target="#modal-container">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Sí, inactivar</button>
+        </form>
+    </div>
+</div>

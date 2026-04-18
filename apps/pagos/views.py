@@ -10,7 +10,7 @@ from .forms import PagoEditarForm
 
 @login_required
 def modal_registrar_pago(request, cliente_id):
-    cliente = get_object_or_404(Cliente, id=cliente_id, activo=True)
+    cliente = get_object_or_404(Cliente, id=cliente_id)
 
     if request.method == "POST":
         pago_instancia = Pago(cliente=cliente, usuario_registrador=request.user)
@@ -19,6 +19,12 @@ def modal_registrar_pago(request, cliente_id):
             pago = form.save(commit=False)
             pago.fecha_pago = date.today()
             pago.save()
+
+            # Si el cliente estaba inactivo, reactivarlo
+            if not cliente.activo:
+                cliente.activo = True
+                cliente.save()
+
             return HttpResponse(status=204, headers={"HX-Trigger": "pagoActualizado"})
     else:
         mes_inicial = date.today().replace(day=1).strftime("%Y-%m")

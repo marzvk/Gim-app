@@ -91,6 +91,14 @@
     
     <div class="modal-footer">
         <button type="button" class="btn btn-secondary close-modal">Cerrar</button>
+        {% if request.user.rol == 'dueño' and cliente.activo %}
+        <button type="button"
+                class="btn btn-outline-danger"
+                hx-get="{% url 'confirmar_inactivar_cliente' cliente.id %}"
+                hx-target="#modal-container">
+            🚫 Inactivar cliente
+        </button>
+        {% endif %}
         <button type="button" 
                 class="btn btn-primary"
                 hx-get="{% url 'modal_pago' cliente.id %}"

@@ -35,12 +35,13 @@ def dashboard(request):
     busqueda = request.GET.get("busqueda", "").strip()
     filtro_estado = request.GET.get("estado", "")
 
-    # Query base: clientes del turno actual
-    clientes_qs = Cliente.objects.filter(activo=True)
-
-    # Filtrar por turno
-    if turno_actual and not busqueda:
-        clientes_qs = clientes_qs.filter(turno=turno_actual)
+    # Query base: si hay búsqueda incluir inactivos, sino solo activos
+    if busqueda:
+        clientes_qs = Cliente.objects.all()
+    else:
+        clientes_qs = Cliente.objects.filter(activo=True)
+        if turno_actual:
+            clientes_qs = clientes_qs.filter(turno=turno_actual)
 
     # Aplicar búsqueda (nombre O apellido)
     if busqueda:
@@ -134,6 +135,23 @@ def editar_cliente(request, cliente_id):
         form = ClienteForm(instance=cliente)
     return render(
         request, "clientes/_modal_cliente.html", {"form": form, "cliente": cliente}
+    )
+
+
+@login_required
+def confirmar_inactivar_cliente(request, cliente_id):
+    if request.user.rol != "dueño":
+        return HttpResponseForbidden()
+
+    cliente = get_object_or_404(Cliente, id=cliente_id)
+
+    if request.method == "POST":
+        cliente.activo = False
+        cliente.save()
+        return HttpResponse(status=204, headers={"HX-Trigger": "clienteActualizado"})
+
+    return render(
+        request, "clientes/_modal_confirmar_inactivar.html", {"cliente": cliente}
     )
 
 
