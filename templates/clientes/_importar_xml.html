@@ -14,10 +14,12 @@
 </div>
 {% endif %}
 
-<form method="post" enctype="multipart/form-data" action="{% url 'importar_xml' %}">
+<form hx-post="{% url 'importar_xml' %}" 
+      hx-target="#importar-container"
+      hx-encoding="multipart/form-data">
     {% csrf_token %}
     <div class="mb-3">
-        <label class="form-label">Seleccioná el archivo XML</label>
+        <label class="form-label">Seleccioná el archivo Xml</label>
         <input type="file" name="archivo" accept=".xml" class="form-control">
     </div>
     <button type="submit" class="btn btn-primary">📤 Importar</button>
