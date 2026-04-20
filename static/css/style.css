@@ -189,3 +189,76 @@
         padding: 0.4rem;
     }
 }
+
+/* =========================================
+   ESTILOS PÁGINA REPORTES
+   ========================================= */
+
+/* Contenedor del Encabezado de Reportes */
+.report-header {
+    transition: all 0.3s ease;
+}
+
+/* Título del reporte: permite salto de línea si es muy largo en móvil */
+.report-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    word-break: break-word;
+    /* Evita que rompa el layout en móviles muy chicos */
+}
+
+/* Ajuste de títulos en móvil */
+@media (max-width: 576px) {
+    .report-title {
+        font-size: 1.2rem;
+    }
+
+    .report-header {
+        text-align: center;
+    }
+}
+
+/* --- Tarjetas de Turnos --- */
+.report-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.report-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Asegura que las filas de la tabla tengan un alto mínimo para el tacto en móvil */
+.report-card table tr {
+    min-height: 40px;
+    vertical-align: middle;
+}
+
+/* --- Sección Backup --- */
+.backup-section {
+    opacity: 0.95;
+}
+
+.btn-flex-fill {
+    min-width: 80px;
+    /* Ancho mínimo para que los botones no se aplasten */
+    flex: 1;
+    /* Hace que los botones crezcan para llenar el espacio disponible */
+}
+
+/* Animación suave para cuando HTMX carga el formulario de importar */
+.fade-in {
+    animation: fadeIn 0.4s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

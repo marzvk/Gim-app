@@ -5,118 +5,124 @@
 {% block content %}
 <div class="container-fluid">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div class="d-flex align-items-center gap-3">
-            <a href="{% url 'reportes' %}?mes={{ mes_anterior_param }}" class="btn btn-outline-secondary btn-sm">← Anterior</a>
-            <h2 class="mb-0">📊 Reportes — {{ mes_actual|date:"F Y" }}</h2>
+    <!-- SECCIÓN 1: ENCABEZADO (Navegación de Fechas y Volver) -->
+    <div class="report-header d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 gap-3">
+        
+        <!-- Navegación de Meses -->
+        <div class="d-flex align-items-center gap-3 text-center text-md-start">
+            <a href="{% url 'reportes' %}?mes={{ mes_anterior_param }}" class="btn btn-outline-secondary btn-sm">← Mes anterior</a>
+            
+            <h2 class="mb-0 report-title">📊 Reportes — {{ mes_actual|date:"F Y" }}</h2>
+            
             {% if es_mes_actual %}
-                <button class="btn btn-outline-secondary btn-sm" disabled>Siguiente →</button>
+                <button class="btn btn-outline-secondary btn-sm" disabled>No hay registros</button>
             {% else %}
-                <a href="{% url 'reportes' %}?mes={{ mes_siguiente_param }}" class="btn btn-outline-secondary btn-sm">Siguiente →</a>
+                <a href="{% url 'reportes' %}?mes={{ mes_siguiente_param }}" class="btn btn-outline-secondary btn-sm">→ Mes siguiente</a>
             {% endif %}
         </div>
 
-        
-        <div class="d-flex gap-2">
-            
-            <!-- Sección Backup -->
-            <div class="card mb-4 mt-3 shadow-sm">
-                <div class="card-header bg-secondary text-white">
-                    <h5 class="mb-0">🗄️ Backup de datos</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <!-- Exportar -->
-                        <div class="col-md-6">
-                            <h6 class="text-muted mb-3">📥 Exportar</h6>
-                            <div class="d-flex gap-2">
-                                <a href="{% url 'exportar_xml' %}" class="btn btn-outline-primary">
-                                    XML
-                                </a>
-                                <a href="{% url 'exportar_excel' %}" class="btn btn-outline-success">
-                                    Excel
-                                </a>
-                                <a href="{% url 'exportar_csv' %}" class="btn btn-outline-secondary">
-                                    CSV
-                                </a>
-                            </div>
-                        </div>
-                    
-                        <!-- Importar -->
-                        <div class="col-md-6">
-                            <h6 class="text-muted mb-3">📤 Importar</h6>
-                            <div class="d-flex gap-2">
-                                <button class="btn btn-outline-primary"
-                                        hx-get="{% url 'importar_xml' %}"
-                                        hx-target="#importar-container">
-                                    XML
-                                </button>
-                                <button class="btn btn-outline-success"
-                                        hx-get="{% url 'importar_excel' %}"
-                                        hx-target="#importar-container">
-                                    Excel
-                                </button>
-                                <button class="btn btn-outline-secondary"
-                                        hx-get="{% url 'importar_csv' %}"
-                                        hx-target="#importar-container">
-                                    CSV
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                
-                    <!-- Formulario de importación -->
-                    <div id="importar-container" class="mt-3"></div>
-                </div>
-            </div>
-
-            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">← Volver</a>
-        </div>
-
-        <!-- Contenedor para el formulario de importación -->
-        <div id="importar-container" class="mt-3"></div>
-
+        <!-- Botón Volver -->
+        <a href="{% url 'dashboard' %}" class="btn btn-outline-primary fw-bold px-3">
+    <i class="bi bi-arrow-left-circle-fill"></i> Volver
+</a>
     </div>
 
+    <!-- SECCIÓN 2: DATOS (Tarjetas de Turnos) -->
     <div class="row g-4">
         {% for dato in datos_turnos %}
-        <div class="col-md-4">
-            <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">{{ dato.turno.nombre }}</h5>
-                    <small>{{ dato.turno.hora_inicio|time:"H:i" }} - {{ dato.turno.hora_fin|time:"H:i" }}</small>
+        <div class="col-12 col-md-6 col-lg-4">
+            <div class="card shadow-sm border-0 report-card h-100">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-0">{{ dato.turno.nombre }}</h5>
+                        <small class="opacity-75">{{ dato.turno.hora_inicio|time:"H:i" }} - {{ dato.turno.hora_fin|time:"H:i" }}</small>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <table class="table table-sm mb-0">
-                        <tr>
-                            <td>Total activos</td>
-                            <td class="fw-bold text-end">{{ dato.total }}</td>
+                <div class="card-body p-0">
+                    <table class="table table-sm mb-0 table-borderless">
+                        <tr class="border-bottom">
+                            <td class="ps-3">Total activos</td>
+                            <td class="fw-bold text-end pe-3">{{ dato.total }}</td>
                         </tr>
-                        <tr>
-                            <td>✅ Al día</td>
-                            <td class="fw-bold text-success text-end">{{ dato.al_dia }}</td>
+                        <tr class="border-bottom">
+                            <td class="ps-3">✅ Al día</td>
+                            <td class="fw-bold text-success text-end pe-3">{{ dato.al_dia }}</td>
                         </tr>
-                        <tr>
-                            <td>❌ Vencidos</td>
-                            <td class="fw-bold text-danger text-end">{{ dato.vencidos }}</td>
+                        <tr class="border-bottom">
+                            <td class="ps-3">❌ Vencidos</td>
+                            <td class="fw-bold text-danger text-end pe-3">{{ dato.vencidos }}</td>
                         </tr>
-                        <tr>
-                            <td>⚠️ Pendientes</td>
-                            <td class="fw-bold text-warning text-end">{{ dato.pendientes }}</td>
+                        <tr class="border-bottom">
+                            <td class="ps-3">⚠️ Pendientes</td>
+                            <td class="fw-bold text-warning text-end pe-3">{{ dato.pendientes }}</td>
                         </tr>
-                        <tr>
-                            <td>% Vencidos</td>
-                            <td class="fw-bold text-end">{{ dato.porcentaje_vencidos }}%</td>
+                        <tr class="border-bottom">
+                            <td class="ps-3">% Vencidos</td>
+                            <td class="fw-bold text-end pe-3">{{ dato.porcentaje_vencidos }}%</td>
                         </tr>
                         <tr class="table-success">
-                            <td>💰 Ingresos del mes</td>
-                            <td class="fw-bold text-end">${{ dato.ingresos_mes|floatformat:0 }}</td>
+                            <td class="ps-3">💰 Ingresos del mes</td>
+                            <td class="fw-bold text-end pe-3 text-success">${{ dato.ingresos_mes|floatformat:0 }}</td>
                         </tr>
                     </table>
                 </div>
             </div>
         </div>
         {% endfor %}
+    </div>
+
+    <!-- SECCIÓN 3: BACKUP (Al final) -->
+    <div class="backup-section mt-5 pt-4 border-top">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">🗄️ Backup de datos</h5>
+                <small class="mb-0 opacity-75">Gestión completa de exportación e importación</small>
+            </div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <!-- Exportar -->
+                    <div class="col-12 col-md-6">
+                        <h6 class="text-muted mb-3 border-bottom pb-2">📥 Exportar datos</h6>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <a href="{% url 'exportar_xml' %}" class="btn btn-outline-primary btn-flex-fill">
+                                <i class="bi bi-file-code"></i> XML
+                            </a>
+                            <a href="{% url 'exportar_excel' %}" class="btn btn-outline-success btn-flex-fill">
+                                <i class="bi bi-file-earmark-excel"></i> Excel
+                            </a>
+                            <a href="{% url 'exportar_csv' %}" class="btn btn-outline-secondary btn-flex-fill">
+                                <i class="bi bi-filetype-csv"></i> CSV
+                            </a>
+                        </div>
+                    </div>
+                
+                    <!-- Importar -->
+                    <div class="col-12 col-md-6">
+                        <h6 class="text-muted mb-3 border-bottom pb-2">📤 Importar datos</h6>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button class="btn btn-outline-primary btn-flex-fill"
+                                    hx-get="{% url 'importar_xml' %}"
+                                    hx-target="#importar-container">
+                                <i class="bi bi-upload"></i> XML
+                            </button>
+                            <button class="btn btn-outline-success btn-flex-fill"
+                                    hx-get="{% url 'importar_excel' %}"
+                                    hx-target="#importar-container">
+                                <i class="bi bi-upload"></i> Excel
+                            </button>
+                            <button class="btn btn-outline-secondary btn-flex-fill"
+                                    hx-get="{% url 'importar_csv' %}"
+                                    hx-target="#importar-container">
+                                <i class="bi bi-upload"></i> CSV
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            
+                <!-- Contenedor HTMX para el formulario de importación -->
+                <div id="importar-container" class="mt-4 fade-in"></div>
+            </div>
+        </div>
     </div>
 
 </div>
