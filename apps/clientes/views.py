@@ -4,8 +4,9 @@ from .models import Cliente
 from apps.clientes.services import obtener_turno_actual, calcular_estado_cliente
 from django.db.models import Q
 from .forms import ClienteForm
-from django.http import HttpResponse, HttpResponseForbidden
+from django.http import HttpResponse
 from django.db import IntegrityError
+from apps.usuarios.decorators import rol_requerido
 
 
 @login_required
@@ -139,11 +140,8 @@ def editar_cliente(request, cliente_id):
     )
 
 
-@login_required
+@rol_requerido("dueño")
 def confirmar_inactivar_cliente(request, cliente_id):
-    if request.user.rol != "dueño":
-        return HttpResponseForbidden()
-
     cliente = get_object_or_404(Cliente, id=cliente_id)
 
     if request.method == "POST":
@@ -156,11 +154,8 @@ def confirmar_inactivar_cliente(request, cliente_id):
     )
 
 
-@login_required
+@rol_requerido("dueño")
 def reportes(request):
-    if request.user.rol != "dueño":
-        return HttpResponseForbidden("No tenés permiso para ver esta página.")
-
     from apps.usuarios.models import Turno
     from apps.pagos.models import Pago
     from django.db.models import Sum
@@ -244,11 +239,8 @@ def reportes(request):
 # *******************************
 
 
-@login_required
+@rol_requerido("dueño")
 def exportar_xml(request):
-    if request.user.rol != "dueño":
-        return HttpResponseForbidden()
-
     from django.http import HttpResponse
     from apps.pagos.models import Pago
     import xml.etree.ElementTree as ET
@@ -288,11 +280,8 @@ def exportar_xml(request):
     return response
 
 
-@login_required
+@rol_requerido("dueño")
 def importar_xml(request):
-    if request.user.rol != "dueño":
-        return HttpResponseForbidden()
-
     if request.method != "POST":
         return render(request, "clientes/_importar_xml.html")
 
@@ -423,11 +412,8 @@ def importar_xml(request):
 # *******************************
 
 
-@login_required
+@rol_requerido("dueño")
 def exportar_excel(request):
-    if request.user.rol != "dueño":
-        return HttpResponseForbidden()
-
     from openpyxl import Workbook
     from openpyxl.styles import Font, PatternFill, Alignment
     from apps.pagos.models import Pago
@@ -525,11 +511,8 @@ def exportar_excel(request):
     return response
 
 
-@login_required
+@rol_requerido("dueño")
 def importar_excel(request):
-    if request.user.rol != "dueño":
-        return HttpResponseForbidden()
-
     if request.method != "POST":
         return render(request, "clientes/_importar_excel.html")
 
@@ -710,11 +693,8 @@ def importar_excel(request):
 # *********************************
 
 
-@login_required
+@rol_requerido("dueño")
 def exportar_csv(request):
-    if request.user.rol != "dueño":
-        return HttpResponseForbidden()
-
     import csv
     from apps.pagos.models import Pago
     from django.http import HttpResponse
@@ -776,11 +756,8 @@ def exportar_csv(request):
     return response
 
 
-@login_required
+@rol_requerido("dueño")
 def importar_csv(request):
-    if request.user.rol != "dueño":
-        return HttpResponseForbidden()
-
     if request.method != "POST":
         return render(request, "clientes/_importar_csv.html")
 

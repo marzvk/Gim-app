@@ -202,6 +202,9 @@ class BorrarPagoViewTestCase(BaseTestCase):
 
     def setUp(self):
         super().setUp()
+        self.dueno = User.objects.create_user(
+            username="dueno", password="dueno123", rol="dueño"
+        )
         self.pago = Pago.objects.create(
             cliente=self.cliente,
             fecha_pago=date(2026, 4, 1),
@@ -211,15 +214,20 @@ class BorrarPagoViewTestCase(BaseTestCase):
         )
 
     def test_borrar_pago(self):
-        self.client.login(username="testuser", password="test123")
+        self.client.login(username="dueno", password="dueno123")
         response = self.client.post(f"/pagos/borrar/{self.pago.id}/")
         self.assertEqual(response.status_code, 200)
         self.assertFalse(Pago.objects.filter(id=self.pago.id).exists())
 
     def test_get_no_permitido(self):
-        self.client.login(username="testuser", password="test123")
+        self.client.login(username="dueno", password="dueno123")
         response = self.client.get(f"/pagos/borrar/{self.pago.id}/")
         self.assertEqual(response.status_code, 405)
+
+    def test_profesor_no_puede_borrar_pago(self):
+        self.client.login(username="testuser", password="test123")
+        response = self.client.post(f"/pagos/borrar/{self.pago.id}/")
+        self.assertEqual(response.status_code, 403)
 
 
 class PagoModelTestCase(BaseTestCase):

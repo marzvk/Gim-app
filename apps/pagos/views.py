@@ -5,6 +5,7 @@ from django.http import HttpResponse
 from django.db import IntegrityError
 
 from apps.clientes.models import Cliente
+from apps.usuarios.decorators import rol_requerido
 from .models import Pago
 from .forms import PagoEditarForm
 
@@ -63,7 +64,7 @@ def editar_pago(request, pago_id):
     )
 
 
-@login_required
+@rol_requerido("dueño")
 def borrar_pago(request, pago_id):
     pago = get_object_or_404(Pago, id=pago_id)
     cliente = pago.cliente
@@ -81,7 +82,7 @@ def borrar_pago(request, pago_id):
     return HttpResponse(status=405)
 
 
-@login_required
+@rol_requerido("dueño")
 def confirmar_borrar_pago(request, pago_id):
     pago = get_object_or_404(Pago, id=pago_id)
     return render(request, "pagos/_modal_confirmar_borrado.html", {"pago": pago})
