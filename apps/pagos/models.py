@@ -39,10 +39,21 @@ class Pago(models.Model):
         auto_now_add=True, help_text="Timestamp del registro"
     )
 
+    def save(self, *args, **kwargs):
+        if self.mes_cubierto:
+            self.mes_cubierto = self.mes_cubierto.replace(day=1)
+        super().save(*args, **kwargs)
+
     class Meta:
         verbose_name = "Pago"
         verbose_name_plural = "Pagos"
         ordering = ["-fecha_pago"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["cliente", "mes_cubierto"],
+                name="unique_pago_por_mes",
+            )
+        ]
 
     def __str__(self):
         return f"{self.cliente} - {self.mes_cubierto.strftime('%m/%Y')} - ${self.monto}"

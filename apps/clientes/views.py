@@ -5,6 +5,7 @@ from apps.clientes.services import obtener_turno_actual, calcular_estado_cliente
 from django.db.models import Q
 from .forms import ClienteForm
 from django.http import HttpResponse, HttpResponseForbidden
+from django.db import IntegrityError
 
 
 @login_required
@@ -389,14 +390,18 @@ def importar_xml(request):
             pagos_saltados += 1
             continue
 
-        Pago.objects.create(
-            cliente=cliente,
-            fecha_pago=fecha_pago,
-            mes_cubierto=mes_cubierto,
-            monto=p.findtext("monto") or 0,
-            observaciones=p.findtext("observaciones") or "",
-            usuario_registrador=request.user,
-        )
+        try:
+            Pago.objects.create(
+                cliente=cliente,
+                fecha_pago=fecha_pago,
+                mes_cubierto=mes_cubierto,
+                monto=p.findtext("monto") or 0,
+                observaciones=p.findtext("observaciones") or "",
+                usuario_registrador=request.user,
+            )
+        except IntegrityError:
+            pagos_saltados += 1
+            continue
         pagos_creados += 1
 
     return render(
@@ -671,14 +676,18 @@ def importar_excel(request):
                 pagos_saltados += 1
                 continue
 
-            Pago.objects.create(
-                cliente=cliente,
-                fecha_pago=fecha_pago,
-                mes_cubierto=mes_cubierto,
-                monto=monto or 0,
-                observaciones=observaciones or "",
-                usuario_registrador=request.user,
-            )
+            try:
+                Pago.objects.create(
+                    cliente=cliente,
+                    fecha_pago=fecha_pago,
+                    mes_cubierto=mes_cubierto,
+                    monto=monto or 0,
+                    observaciones=observaciones or "",
+                    usuario_registrador=request.user,
+                )
+            except IntegrityError:
+                pagos_saltados += 1
+                continue
             pagos_creados += 1
 
     return render(
@@ -908,14 +917,18 @@ def importar_csv(request):
                 pagos_saltados += 1
                 continue
 
-            Pago.objects.create(
-                cliente=cliente,
-                fecha_pago=fecha_pago,
-                mes_cubierto=mes_cubierto,
-                monto=monto or 0,
-                observaciones=observaciones or "",
-                usuario_registrador=request.user,
-            )
+            try:
+                Pago.objects.create(
+                    cliente=cliente,
+                    fecha_pago=fecha_pago,
+                    mes_cubierto=mes_cubierto,
+                    monto=monto or 0,
+                    observaciones=observaciones or "",
+                    usuario_registrador=request.user,
+                )
+            except IntegrityError:
+                pagos_saltados += 1
+                continue
             pagos_creados += 1
 
     return render(

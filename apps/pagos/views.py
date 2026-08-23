@@ -2,6 +2,7 @@ from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from datetime import date
 from django.http import HttpResponse
+from django.db import IntegrityError
 
 from apps.clientes.models import Cliente
 from .models import Pago
@@ -16,16 +17,19 @@ def modal_registrar_pago(request, cliente_id):
         pago_instancia = Pago(cliente=cliente, usuario_registrador=request.user)
         form = PagoEditarForm(data=request.POST, instance=pago_instancia)
         if form.is_valid():
-            pago = form.save(commit=False)
-            pago.fecha_pago = date.today()
-            pago.save()
+            try:
+                pago = form.save(commit=False)
+                pago.fecha_pago = date.today()
+                pago.save()
+            except IntegrityError:
+                form.add_error("mes_cubierto", "Ya existe un pago para este mes.")
+            else:
+                # Si el cliente estaba inactivo, reactivarlo
+                if not cliente.activo:
+                    cliente.activo = True
+                    cliente.save()
 
-            # Si el cliente estaba inactivo, reactivarlo
-            if not cliente.activo:
-                cliente.activo = True
-                cliente.save()
-
-            return HttpResponse(status=204, headers={"HX-Trigger": "pagoActualizado"})
+                return HttpResponse(status=204, headers={"HX-Trigger": "pagoActualizado"})
     else:
         mes_inicial = date.today().replace(day=1).strftime("%Y-%m")
         monto_inicial = cliente.plan.precio if cliente.plan else 0

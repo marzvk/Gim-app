@@ -1,9 +1,11 @@
 from django.contrib import admin
 from .models import Pago
+from .forms import PagoEditarForm
 
 
 @admin.register(Pago)
 class PagoAdmin(admin.ModelAdmin):
+    form = PagoEditarForm
     list_display = [
         "cliente",
         "mes_cubierto_formatted",
