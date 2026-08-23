@@ -9,15 +9,21 @@ class Command(BaseCommand):
         planes = [
             {
                 "codigo": "3_dias",
-                "nombre": "3 días por semana",
-                "precio": 8000,
+                "nombre": "3 veces por semana",
+                "precio": 35000,
                 "orden": 1,
             },
             {
                 "codigo": "5_dias",
-                "nombre": "5 días por semana",
-                "precio": 12000,
+                "nombre": "5 veces por semana",
+                "precio": 45000,
                 "orden": 2,
+            },
+            {
+                "codigo": "libre",
+                "nombre": "Libre",
+                "precio": 55000,
+                "orden": 3,
             },
         ]
 
@@ -27,6 +33,7 @@ class Command(BaseCommand):
                 defaults={
                     "nombre": plan_data["nombre"],
                     "precio": plan_data["precio"],
+                    "activo": True,
                     "orden": plan_data["orden"],
                 },
             )
