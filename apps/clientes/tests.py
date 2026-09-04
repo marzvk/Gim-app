@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.contrib.auth import get_user_model
 from unittest.mock import patch
 from datetime import date
@@ -128,6 +128,7 @@ class MarcarInactivosTestCase(BaseTestCase):
 
 
 # Tests vistas
+@override_settings(AUTHENTICATION_BACKENDS=["django.contrib.auth.backends.ModelBackend"])
 class DashboardViewTestCase(BaseTestCase):
     """Tests para la vista dashboard"""
 
@@ -154,6 +155,7 @@ class DashboardViewTestCase(BaseTestCase):
         self.assertTemplateUsed(response, "clientes/_tabla_clientes.html")
 
 
+@override_settings(AUTHENTICATION_BACKENDS=["django.contrib.auth.backends.ModelBackend"])
 class ReportesViewTestCase(BaseTestCase):
     """Tests para la vista reportes — solo dueño"""
 
@@ -184,6 +186,7 @@ class ReportesViewTestCase(BaseTestCase):
         self.assertIn("datos_turnos", response.context)
 
 
+@override_settings(AUTHENTICATION_BACKENDS=["django.contrib.auth.backends.ModelBackend"])
 class CrearClienteViewTestCase(BaseTestCase):
     """Tests para crear cliente"""
 

@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.contrib.auth import get_user_model
 from datetime import date
 from django.db import IntegrityError
@@ -115,6 +115,7 @@ class PagoFormTestCase(BaseTestCase):
 # Test registrar pagos
 
 
+@override_settings(AUTHENTICATION_BACKENDS=["django.contrib.auth.backends.ModelBackend"])
 class RegistrarPagoViewTestCase(BaseTestCase):
     """Tests para la vista modal_registrar_pago"""
 
@@ -163,6 +164,7 @@ class RegistrarPagoViewTestCase(BaseTestCase):
         self.assertEqual(Pago.objects.filter(cliente=self.cliente).count(), 1)
 
 
+@override_settings(AUTHENTICATION_BACKENDS=["django.contrib.auth.backends.ModelBackend"])
 class EditarPagoViewTestCase(BaseTestCase):
     """Tests para la vista editar_pago"""
 
@@ -197,6 +199,7 @@ class EditarPagoViewTestCase(BaseTestCase):
         self.assertEqual(self.pago.monto, 40000)
 
 
+@override_settings(AUTHENTICATION_BACKENDS=["django.contrib.auth.backends.ModelBackend"])
 class BorrarPagoViewTestCase(BaseTestCase):
     """Tests para la vista borrar_pago"""
 
@@ -287,6 +290,7 @@ class PagoModelTestCase(BaseTestCase):
         self.assertIsNotNone(pago2.pk)
 
 
+@override_settings(AUTHENTICATION_BACKENDS=["django.contrib.auth.backends.ModelBackend"])
 class IntegrityErrorViewTestCase(BaseTestCase):
     """Tests para manejo de IntegrityError en vistas"""
 
