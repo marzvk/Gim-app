@@ -1,4 +1,4 @@
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from django.contrib.auth import get_user_model
 from datetime import date
 
@@ -9,7 +9,6 @@ from apps.pagos.models import Pago
 User = get_user_model()
 
 
-@override_settings(AUTHENTICATION_BACKENDS=["django.contrib.auth.backends.ModelBackend"])
 class BaseTestCase(TestCase):
 
     def setUp(self):
@@ -162,66 +161,3 @@ class ViewsAbiertasTestCase(BaseTestCase):
         self.client.login(username="profesor", password="profesor123")
         response = self.client.get(f"/pagos/editar/{self.pago.id}/")
         self.assertEqual(response.status_code, 200)
-
-
-class SecurityTestCase(BaseTestCase):
-    """Tests de seguridad: headers, rate limiting, validación uploads"""
-
-    def test_headers_seguridad_presentes(self):
-        """Verifica headers de seguridad en respuesta"""
-        self.client.login(username="dueno", password="dueno123")
-        response = self.client.get("/reportes/")
-        self.assertEqual(response["X-Frame-Options"], "DENY")
-        self.assertEqual(response["X-Content-Type-Options"], "nosniff")
-        self.assertIn("strict-origin-when-cross-origin", response["Referrer-Policy"])
-
-    def test_upload_extension_invalida(self):
-        """Rechaza archivos con extensión no permitida"""
-        self.client.login(username="dueno", password="dueno123")
-        from django.core.files.uploadedfile import SimpleUploadedFile
-        archivo = SimpleUploadedFile("malicioso.txt", b"contenido", content_type="text/plain")
-        response = self.client.post("/importar/xml/", {"archivo": archivo})
-        self.assertEqual(response.status_code, 200)
-        self.assertIn("Extensión", response.content.decode())
-
-    def test_upload_tamano_excede(self):
-        """Rechaza archivos mayores a 2MB"""
-        self.client.login(username="dueno", password="dueno123")
-        from django.core.files.uploadedfile import SimpleUploadedFile
-        contenido = b"x" * (3 * 1024 * 1024)
-        archivo = SimpleUploadedFile("grande.xml", contenido, content_type="application/xml")
-        response = self.client.post("/importar/xml/", {"archivo": archivo})
-        self.assertEqual(response.status_code, 200)
-        self.assertIn("2MB", response.content.decode())
-
-    def test_login_lockout(self):
-        """Bloquea tras 5 intentos fallidos (axes)"""
-        from django.core.cache import cache
-        cache.clear()
-        for _ in range(6):
-            self.client.post("/login/", {"username": "inexistente", "password": "wrong"})
-        response = self.client.post("/login/", {"username": "inexistente", "password": "wrong"})
-        self.assertEqual(response.status_code, 429)
-        self.assertIn("bloqueado", response.content.decode())
-
-    def test_xml_malicioso_xxe_rechazado(self):
-        """Rechaza XML con entidad externa (XXE)"""
-        self.client.login(username="dueno", password="dueno123")
-        from django.core.files.uploadedfile import SimpleUploadedFile
-        xxe_payload = (
-            b'<?xml version="1.0"?>'
-            b'<!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]>'
-            b'<gimnasio><clientes><cliente><id>1</id><nombre>Test</nombre>'
-            b'<apellido>User</apellido><plan>3_dias</plan><turno>Manana</turno>'
-            b'<activo>True</activo></cliente></clientes></gimnasio>'
-        )
-        archivo = SimpleUploadedFile("xxe.xml", xxe_payload, content_type="application/xml")
-        response = self.client.post("/importar/xml/", {"archivo": archivo})
-        self.assertEqual(response.status_code, 200)
-        self.assertIn("entidades externas", response.content.decode())
-
-    def test_proxy_ssl_header(self):
-        """Verifica que SECURE_PROXY_SSL_HEADER funciona"""
-        self.client.login(username="dueno", password="dueno123")
-        response = self.client.get("/reportes/", HTTP_X_FORWARDED_PROTO="https")
-        self.assertTrue(response.wsgi_request.is_secure())

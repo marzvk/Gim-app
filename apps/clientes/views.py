@@ -285,10 +285,9 @@ def importar_xml(request):
     if request.method != "POST":
         return render(request, "clientes/_importar_xml.html")
 
-    from defusedxml import ElementTree as ET
+    import xml.etree.ElementTree as ET
     from apps.pagos.models import Pago
     from datetime import date
-    from apps.clientes.utils import validar_archivo_importacion
 
     archivo = request.FILES.get("archivo")
     if not archivo:
@@ -296,14 +295,6 @@ def importar_xml(request):
             request,
             "clientes/_importar_xml.html",
             {"error": "No se seleccionó archivo"},
-        )
-
-    valido, error_msg = validar_archivo_importacion(archivo, "xml")
-    if not valido:
-        return render(
-            request,
-            "clientes/_importar_xml.html",
-            {"error": error_msg},
         )
 
     try:
@@ -314,12 +305,6 @@ def importar_xml(request):
             request,
             "clientes/_importar_xml.html",
             {"error": "El archivo no es un XML válido"},
-        )
-    except ET.EntitiesForbidden:
-        return render(
-            request,
-            "clientes/_importar_xml.html",
-            {"error": "El archivo contiene entidades externas no permitidas"},
         )
 
     from apps.usuarios.models import Turno
@@ -536,7 +521,6 @@ def importar_excel(request):
     from apps.usuarios.models import Turno
     from apps.clientes.models import Plan
     from datetime import date
-    from apps.clientes.utils import validar_archivo_importacion
 
     archivo = request.FILES.get("archivo")
     if not archivo:
@@ -546,16 +530,8 @@ def importar_excel(request):
             {"error": "No se seleccionó archivo"},
         )
 
-    valido, error_msg = validar_archivo_importacion(archivo, "excel")
-    if not valido:
-        return render(
-            request,
-            "clientes/_importar_excel.html",
-            {"error": error_msg},
-        )
-
     try:
-        wb = load_workbook(archivo, read_only=True)
+        wb = load_workbook(archivo)
     except Exception:
         return render(
             request,
@@ -790,7 +766,6 @@ def importar_csv(request):
     from apps.usuarios.models import Turno
     from apps.clientes.models import Plan
     from datetime import datetime
-    from apps.clientes.utils import validar_archivo_importacion
 
     archivo = request.FILES.get("archivo")
     if not archivo:
@@ -798,14 +773,6 @@ def importar_csv(request):
             request,
             "clientes/_importar_csv.html",
             {"error": "No se seleccionó archivo"},
-        )
-
-    valido, error_msg = validar_archivo_importacion(archivo, "csv")
-    if not valido:
-        return render(
-            request,
-            "clientes/_importar_csv.html",
-            {"error": error_msg},
         )
 
     try:
