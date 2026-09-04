@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block title %}Acceso bloqueado - Gimnasio{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-4">
+        <div class="card shadow">
+            <div class="card-body text-center">
+                <h3>🔒 Acceso bloqueado temporalmente</h3>
+                <p class="text-muted">Demasiados intentos fallidos. Esperá 15 minutos e intentá de nuevo.</p>
+                <a href="{% url 'login' %}" class="btn btn-primary">Volver al login</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
