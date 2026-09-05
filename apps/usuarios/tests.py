@@ -61,6 +61,48 @@ class DecoradorRolRequeridoTestCase(BaseTestCase):
         self.assertEqual(response.status_code, 200)
 
 
+class LoginTemplateTestCase(TestCase):
+    """Renderizado de la pantalla de login rediseñada (diseño premium)"""
+
+    def test_login_standalone_sin_extends(self):
+        response = self.client.get("/login/")
+        html = response.content.decode()
+        self.assertNotIn("extends 'base.html'", html)
+        self.assertNotIn('navbar', html)
+
+    def test_login_estructura_premium(self):
+        response = self.client.get("/login/")
+        html = response.content.decode()
+        self.assertIn("GimApp", html)
+        self.assertIn("Bienvenido de nuevo", html)
+        self.assertIn("auth-brand", html)
+        self.assertIn("auth-form", html)
+        self.assertIn("auth-theme-toggle", html)
+
+    def test_login_campos_y_atributos(self):
+        response = self.client.get("/login/")
+        html = response.content.decode()
+        self.assertIn('name="username"', html)
+        self.assertIn('name="password"', html)
+        self.assertIn('autocomplete="current-password"', html)
+        self.assertIn("csrfmiddlewaretoken", html)
+
+    def test_login_credenciales_invalidas_muestra_error(self):
+        response = self.client.post(
+            "/login/", {"username": "usuario_no_existe", "password": "clave_incorrecta"}
+        )
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn("Usuario o contraseña incorrectos", html)
+        self.assertIn('aria-live="assertive"', html)
+
+    def test_lockout_mantiene_mensaje_protegido(self):
+        from django.template.loader import render_to_string
+        html = render_to_string("registration/lockout.html", {}, None)
+        self.assertIn("bloqueado", html)
+        self.assertIn("15 minutos", html)
+
+
 class ExportImportAuthTestCase(BaseTestCase):
     """Tests de autorización en endpoints de exportar/importar"""
 

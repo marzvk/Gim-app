@@ -1,50 +1,188 @@
-{% extends 'base.html' %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" id="meta-theme-color" content="#0f172a">
+    <title>Ingresá — GimApp</title>
 
-{% block title %}Login - Gimnasio{% endblock %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml"
+          href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232563eb'/%3E%3Ctext x='16' y='22' font-size='15' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'%3E%F0%9F%9B%A0%3C/text%3E%3C/svg%3E">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
 
-{% block content %}
-<div class="row justify-content-center mt-5">
-    <div class="col-md-4">
-        <div class="card shadow">
-            <div class="card-body">
-                <h3 class="card-title text-center mb-4">
-                    🏋️ Gimnasio
-                </h3>
-                
+<body class="auth-body">
+
+    <main class="auth-shell">
+
+        <!-- ── Panel de marca ─────────────────────────────────────────────── -->
+        <aside class="auth-brand" aria-hidden="true">
+            <div class="auth-brand__decoration auth-brand__decoration--a"></div>
+            <div class="auth-brand__decoration auth-brand__decoration--b"></div>
+
+            <a class="auth-brand__logo" href="{% url 'login' %}" tabindex="-1">
+                <span class="auth-logo-mark">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true">
+                        <rect x="7.4" y="10.6" width="9.2" height="2.8" rx="1.4"/>
+                        <rect x="1.8" y="7.6" width="3.2" height="8.8" rx="1.2"/>
+                        <rect x="5" y="9" width="2.4" height="6" rx="1.1"/>
+                        <rect x="16.6" y="9" width="2.4" height="6" rx="1.1"/>
+                        <rect x="19" y="7.6" width="3.2" height="8.8" rx="1.2"/>
+                    </svg>
+                </span>
+                <span class="auth-brand__name">GimApp</span>
+            </a>
+
+            <div class="auth-brand__copy">
+                <h1 class="auth-brand__title">
+                    Gestioná tu gimnasio<br>
+                    <span>hasta el último rep.</span>
+                </h1>
+                <p class="auth-brand__text">
+                    Clientes, turnos, planes y pagos en un solo lugar.
+                    Simple para vos, transparente para tu equipo.
+                </p>
+            </div>
+
+            <div class="auth-brand__stats">
+                <div class="auth-stat">
+                    <strong>3</strong>
+                    <span>turnos por día</span>
+                </div>
+                <div class="auth-stat">
+                    <strong>100%</strong>
+                    <span>sin recargas</span>
+                </div>
+                <div class="auth-stat">
+                    <strong>24/7</strong>
+                    <span>disponible</span>
+                </div>
+            </div>
+
+            <p class="auth-brand__footer">Panel privado para el equipo del gimnasio</p>
+        </aside>
+
+        <!-- ── Panel del formulario ───────────────────────────────────────── -->
+        <section class="auth-form" aria-label="Ingreso al sistema">
+            <button type="button" class="auth-toggler" id="auth-theme-toggle"
+                    aria-label="Cambiar tema claro u oscuro" role="switch" aria-checked="false">
+                <i class="bi bi-moon-stars-fill auth-toggler__dark" aria-hidden="true"></i>
+                <i class="bi bi-sun-fill auth-toggler__light" aria-hidden="true"></i>
+            </button>
+
+            <div class="auth-form__card">
+                <div class="auth-heading">
+                    <h2 class="auth-heading__title">Bienvenido de nuevo</h2>
+                    <p class="auth-heading__subtitle">Ingresá con tu cuenta para continuar.</p>
+                </div>
+
                 {% if form.errors %}
-                <div class="alert alert-danger" role="alert">
-                    Usuario o contraseña incorrectos
+                <div class="alert alert-danger auth-error d-flex align-items-center gap-2"
+                     role="alert" id="auth-error" aria-live="assertive">
+                    <i class="bi bi-exclamation-circle-fill" aria-hidden="true"></i>
+                    <div>Usuario o contraseña incorrectos.</div>
                 </div>
                 {% endif %}
 
-                <form method="post">
+                <form method="post" action="{% url 'login' %}" novalidate id="auth-form" {% if form.errors %}class="has-error"{% endif %}>
                     {% csrf_token %}
-                    
-                    <div class="mb-3">
-                        <label for="id_username" class="form-label">Usuario</label>
-                        <input type="text" 
-                               name="username" 
-                               id="id_username"
-                               class="form-control" 
-                               required 
-                               autofocus>
+
+                    <div class="auth-field mb-3">
+                        <label for="id_username" class="visually-hidden">Usuario</label>
+                        <input type="text" name="username" id="id_username"
+                               class="form-control" autocomplete="username"
+                               placeholder="Usuario" required autofocus>
+                        <div class="auth-feedback">Ingresá tu nombre de usuario.</div>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="id_password" class="form-label">Contraseña</label>
-                        <input type="password" 
-                               name="password" 
-                               id="id_password"
-                               class="form-control" 
-                               required>
+                    <div class="auth-field mb-4">
+                        <label for="id_password" class="visually-hidden">Contraseña</label>
+                        <div class="auth-password position-relative">
+                            <input type="password" name="password" id="id_password"
+                                   class="form-control" autocomplete="current-password"
+                                   placeholder="Contraseña" required>
+                            <button type="button" class="auth-eye" id="auth-toggle-pass"
+                                    aria-label="Mostrar contraseña" aria-pressed="false"
+                                    tabindex="-1">
+                                <i class="bi bi-eye" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                        <div class="auth-feedback">Ingresá tu contraseña.</div>
                     </div>
 
-                    <button type="submit" class="btn btn-primary w-100">
-                        Ingresar
+                    <button type="submit" class="auth-btn" id="auth-submit">
+                        <span class="auth-btn__label">Ingresar</span>
+                        <span class="spinner-border spinner-border-sm d-none"
+                              id="auth-spinner" aria-hidden="true"></span>
                     </button>
                 </form>
+
+                <p class="auth-hint">
+                    ¿Perdiste el acceso? Hablá con el dueño del gimnasio o con administración.
+                </p>
             </div>
-        </div>
-    </div>
-</div>
-{% endblock %}
+        </section>
+
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+    (function () {
+        var STORAGE_KEY = 'theme';
+        var root = document.documentElement;
+        var meta = document.getElementById('meta-theme-color');
+
+        function applyTheme(theme) {
+            root.setAttribute('data-bs-theme', theme);
+            meta.setAttribute('content', theme === 'dark' ? '#0b1220' : '#0f172a');
+            var toggle = document.getElementById('auth-theme-toggle');
+            if (toggle) toggle.setAttribute('aria-checked', theme === 'dark' ? 'true' : 'false');
+        }
+
+        var saved = localStorage.getItem(STORAGE_KEY);
+        var initial = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        applyTheme(initial);
+
+        var toggleBtn = document.getElementById('auth-theme-toggle');
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', function () {
+                var current = root.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
+                applyTheme(current);
+                localStorage.setItem(STORAGE_KEY, current);
+            });
+        }
+
+        var passInput = document.getElementById('id_password');
+        var passToggle = document.getElementById('auth-toggle-pass');
+        if (passInput && passToggle) {
+            passToggle.addEventListener('click', function () {
+                var isPassword = passInput.type === 'password';
+                passInput.type = isPassword ? 'text' : 'password';
+                this.setAttribute('aria-pressed', String(isPassword));
+                this.setAttribute('aria-label', isPassword ? 'Ocultar contraseña' : 'Mostrar contraseña');
+                this.querySelector('i').className = isPassword ? 'bi bi-eye-slash' : 'bi bi-eye';
+                if (isPassword) passInput.focus();
+            });
+        }
+
+        var form = document.getElementById('auth-form');
+        var submit = document.getElementById('auth-submit');
+        var spinner = document.getElementById('auth-spinner');
+        if (form && submit) {
+            form.addEventListener('submit', function () {
+                submit.disabled = true;
+                submit.classList.add('auth-btn--loading');
+                if (spinner) spinner.classList.remove('d-none');
+            });
+        }
+    })();
+    </script>
+</body>
+</html>
