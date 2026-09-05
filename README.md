@@ -66,7 +66,10 @@ Sistema web para la gestión de clientes, pagos y reportes de gimnasios. Desarro
 | Base de datos | SQLite (producción actual) |
 | Exportación | openpyxl (Excel), xml.etree, csv |
 | Autenticación | Django Auth + AbstractUser |
-| Deploy | PythonAnywhere |
+| Deploy | [Guía de despliegue](docs/DEPLOY.md) |
+| Seguridad | django-axes (Brute-force protection) |
+| Archivos Estáticos | WhiteNoise |
+| Entorno | python-dotenv |
 
 ---
 
@@ -103,18 +106,20 @@ Cuando un usuario tiene `rol="dueño"`, un signal de Django le asigna automátic
 
 ## Tests
 
+Suite de pruebas automatizadas (+50 tests) que garantizan la integridad de la lógica de negocio y flujos de usuario.
+
 ```bash
-python manage.py test
+make test
 ```
 
-Cubren: estados de clientes, lógica de pagos, validaciones de formularios, permisos por rol, vistas principales.
+**Cubren:** estados de clientes (cálculo dinámico), lógica de pagos (vencimientos), validaciones de formularios, permisos por rol y vistas principales con HTMX.
 
 ---
 
 ## Roadmap
 
 - [ ] Reportes por mes con navegación histórica
-- [ ] Panel propio para el dueño (sin Django admin)
+- [x] Panel propio para el dueño (sin Django admin)
 - [ ] Migración a PostgreSQL
 - [ ] Notificaciones de pagos vencidos
 - [ ] App mobile
