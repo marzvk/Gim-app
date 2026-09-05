@@ -1,8 +1,10 @@
-<!-- Modal editar pago -->
-        <div class="modal-content">
-            <div class="modal-header bg-warning text-dark">
-                <h5 class="modal-title">✏️ Editar Pago</h5>
-                <button type="button" class="btn-close close-modal"></button>
+<div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <span class="title-icon amber"><i class="bi bi-pencil-square"></i></span>
+                    Editar Pago
+                </h5>
+                <button type="button" class="btn-close close-modal" aria-label="Cerrar"></button>
             </div>
 
             <form hx-post="{% url 'editar_pago' pago.id %}"
@@ -10,43 +12,53 @@
                 {% csrf_token %}
 
                 <div class="modal-body">
-                    <div class="alert alert-info">
-                        <strong>Cliente:</strong> {{ pago.cliente.apellido }}, {{ pago.cliente.nombre }}<br>
-                        <strong>Fecha de pago:</strong> {{ pago.fecha_pago|date:"d/m/Y" }}
+                    <div class="alert alert-info d-flex align-items-center gap-2">
+                        <i class="bi bi-person-fill"></i>
+                        <div>
+                            <strong>{{ pago.cliente.apellido }}, {{ pago.cliente.nombre }}</strong>
+                            <span class="text-muted">— Pago del {{ pago.fecha_pago|date:"d/m/Y" }}</span>
+                        </div>
                     </div>
 
                     {% if form.non_field_errors %}
-                        <div class="alert alert-danger py-2">{{ form.non_field_errors }}</div>
+                        <div class="alert alert-danger d-flex align-items-center gap-2">{{ form.non_field_errors }}</div>
                     {% endif %}
 
-                    <!-- Mes cubierto -->
                     <div class="mb-3">
-                        <label for="{{ form.mes_cubierto.id_for_label }}" class="form-label">Mes que cubre *</label>
+                        <label for="{{ form.mes_cubierto.id_for_label }}" class="form-label">
+                            <i class="bi bi-calendar3 me-1"></i>Mes que cubre *
+                        </label>
                         {{ form.mes_cubierto }}
                         {% if form.mes_cubierto.errors %}
-                            <div class="text-danger small fw-bold">{{ form.mes_cubierto.errors|first }}</div>
+                            <div class="text-danger small fw-bold mt-1">{{ form.mes_cubierto.errors|first }}</div>
                         {% endif %}
                     </div>
 
-                    <!-- Monto -->
                     <div class="mb-3">
-                        <label for="{{ form.monto.id_for_label }}" class="form-label">Monto *</label>
+                        <label for="{{ form.monto.id_for_label }}" class="form-label">
+                            <i class="bi bi-cash me-1"></i>Monto *
+                        </label>
                         {{ form.monto }}
                         {% if form.monto.errors %}
-                            <div class="text-danger small fw-bold">{{ form.monto.errors|first }}</div>
+                            <div class="text-danger small fw-bold mt-1">{{ form.monto.errors|first }}</div>
                         {% endif %}
                     </div>
 
-                    <!-- Observaciones -->
                     <div class="mb-3">
-                        <label for="{{ form.observaciones.id_for_label }}" class="form-label">Observaciones</label>
+                        <label for="{{ form.observaciones.id_for_label }}" class="form-label">
+                            <i class="bi bi-chat-left-text me-1"></i>Observaciones
+                        </label>
                         {{ form.observaciones }}
                     </div>
                 </div>
 
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary close-modal">Cancelar</button>
-                    <button type="submit" class="btn btn-warning">Guardar cambios</button>
+                    <button type="button" class="btn btn-outline-secondary close-modal">
+                        <i class="bi bi-x-lg me-1"></i>Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg me-1"></i>Guardar cambios
+                    </button>
                 </div>
             </form>
         </div>

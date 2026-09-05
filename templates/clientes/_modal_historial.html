@@ -1,109 +1,105 @@
 {% load pago_tags %}
 <div class="modal-content" data-modal-size="modal-lg">
-    <div class="modal-header bg-primary text-white">
-        <h5 class="modal-title">📊 Historial de Pagos</h5>
-        <button type="button" class="btn-close btn-close-white close-modal"></button>
+    <div class="modal-header">
+        <h5 class="modal-title">
+            <span class="title-icon blue"><i class="bi bi-clock-history"></i></span>
+            Historial de Pagos
+        </h5>
+        <button type="button" class="btn-close close-modal" aria-label="Cerrar"></button>
     </div>
     
     <div class="modal-body">
-        <!-- Header: Cliente, Plan, Turno y Valor del Plan actual -->
-        <div class="row mb-3">
-            <div class="col-md-4">
-                <strong>Cliente:</strong> {{ cliente.apellido }}, {{ cliente.nombre }}
+        <div class="d-flex flex-wrap gap-3 mb-3 p-3 bg-body-secondary border rounded-3">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-person-circle text-primary"></i>
+                <span class="fw-semibold">{{ cliente.apellido }}, {{ cliente.nombre }}</span>
             </div>
-            <div class="col-md-2">
-                <strong>Plan:</strong> {{ cliente.plan.nombre }}
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-tag-fill text-muted"></i>
+                <span>{{ cliente.plan.nombre }}</span>
             </div>
-            <div class="col-md-2">
-                <strong>Turno:</strong> {{ cliente.turno.nombre }}
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-clock-fill text-muted"></i>
+                <span>{{ cliente.turno.nombre }}</span>
             </div>
-            <div class="col-md-2">
-                <strong>Monto:</strong> ${{ cliente.plan.precio|floatformat:0 }}
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-cash-stack text-success"></i>
+                <span class="fw-semibold text-success">${{ cliente.plan.precio|floatformat:0 }}</span>
             </div>
         </div>
         
         {% if pagos %}
         <div class="d-flex flex-column gap-2">
             {% for pago in pagos %}
-            <div class="card shadow-sm border-0">
-                <div class="card-body p-2">
-                    <!-- Fila Superior: Fecha, Mes y Usuario -->
-                    <div class="row mb-1 border-bottom pb-1">
-                        <div class="col-4 text-center border-end">
-                            <small class="text-muted d-block" style="font-size: 0.7rem;">FECHA PAGO</small>
-                            <span class="fw-bold">{{ pago.fecha_pago|date:"d/m/Y" }}</span>
-                        </div>
-                        <div class="col-4 text-center border-end">
-                            <small class="text-muted d-block" style="font-size: 0.7rem;">MES CUBIERTO</small>
-                            <span>{{ pago.mes_cubierto|date:"m/Y" }}</span>
-                        </div>
-                        <!-- Usuario aquí en lugar del Monto -->
-                        <div class="col-4 text-center">
-                            <small class="text-muted d-block" style="font-size: 0.7rem;">USUARIO</small>
-                            <div class="text-truncate" title="{{ pago.usuario_registrador.username }}">
-                                {{ pago.usuario_registrador.username|default:"-" }}
+            <div class="card border-0 shadow-sm mb-0">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="bg-primary-subtle text-primary rounded-2 d-flex align-items-center justify-content-center" style="width:40px;height:40px;">
+                                <i class="bi bi-cash-stack"></i>
                             </div>
+                            <div>
+                                <div class="fw-semibold">${{ pago.monto|floatformat:0 }}</div>
+                                <small class="text-muted d-block">{{ pago.fecha_pago|date:"d/m/Y" }} — cubre {{ pago.mes_cubierto|date:"m/Y" }}</small>
+                            </div>
+                        </div>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-secondary"
+                                    hx-get="{% url 'editar_pago' pago.id %}"
+                                    hx-target="#modal-container"
+                                    title="Editar">
+                                <i class="bi bi-pencil-fill"></i>
+                            </button>
+                            <button class="btn btn-outline-danger"
+                                    hx-get="{% url 'confirmar_borrar_pago' pago.id %}"
+                                    hx-target="#modal-container"
+                                    title="Borrar">
+                                <i class="bi bi-trash-fill"></i>
+                            </button>
                         </div>
                     </div>
-
-                    <!-- Fila Inferior: Observaciones (ahora tiene mas espacio) y Acciones -->
-                    <div class="row align-items-center pt-1">
-                        <div class="col-8">
-                            <small class="text-muted d-block" style="font-size: 0.7rem;">OBSERVACIONES</small>
-                            <div class="text-truncate text-secondary" 
-                                 style="font-size: 0.8rem;" 
-                                 title="{{ pago.observaciones|default:'Sin observaciones' }}">
-                                {{ pago.observaciones|default:"-" }}
-                            </div>
-                        </div>
-                        <div class="col-4 text-end">
-                            <div class="btn-group" role="group">
-                                <button class="btn btn-sm btn-outline-primary" 
-                                        hx-get="{% url 'editar_pago' pago.id %}"
-                                        hx-target="#modal-container"
-                                        title="Editar">
-                                    ✏️
-                                </button>
-                                <button class="btn btn-sm btn-outline-danger"
-                                        hx-get="{% url 'confirmar_borrar_pago' pago.id %}"
-                                        hx-target="#modal-container"
-                                        title="Borrar">
-                                    🗑️
-                                </button>
-                            </div>
-                        </div>
+                    {% if pago.observaciones %}
+                    <div class="text-muted small mt-1 ps-5" title="{{ pago.observaciones }}">
+                        <i class="bi bi-chat-left-text me-1"></i>{{ pago.observaciones|truncatewords:15 }}
                     </div>
+                    {% endif %}
                 </div>
             </div>
             {% endfor %}
         </div>
         
-        <div class="alert alert-info mt-3">
-            <strong>Total pagos:</strong> {{ pagos.count }} | 
-            <strong>Monto total:</strong> ${% widthratio pagos|sum_monto 1 1 %}
+        <div class="alert alert-info mt-3 d-flex align-items-center gap-2">
+            <i class="bi bi-bar-chart-line"></i>
+            <div>
+                <strong>{{ pagos.count }} pago{{ pagos.count|pluralize }}</strong>
+                — Total: <strong>${% widthratio pagos|sum_monto 1 1 %}</strong>
+            </div>
         </div>
         {% else %}
-        <div class="alert alert-secondary text-center">
+        <div class="text-center text-muted py-4">
+            <i class="bi bi-inbox d-block fs-2 mb-2"></i>
             Este cliente no tiene pagos registrados
         </div>
         {% endif %}
     </div>
     
     <div class="modal-footer">
-        <button type="button" class="btn btn-secondary close-modal">Cerrar</button>
+        <button type="button" class="btn btn-outline-secondary close-modal">
+            <i class="bi bi-x-lg me-1"></i>Cerrar
+        </button>
         {% if request.user.rol == 'dueño' and cliente.activo %}
         <button type="button"
                 class="btn btn-outline-danger"
                 hx-get="{% url 'confirmar_inactivar_cliente' cliente.id %}"
                 hx-target="#modal-container">
-            🚫 Inactivar cliente
+            <i class="bi bi-person-dash me-1"></i>Inactivar
         </button>
         {% endif %}
         <button type="button" 
                 class="btn btn-primary"
                 hx-get="{% url 'modal_pago' cliente.id %}"
                 hx-target="#modal-container">
-            💰 Nuevo Pago
+            <i class="bi bi-cash-stack me-1"></i>Nuevo Pago
         </button>
     </div>
 </div>

@@ -1,16 +1,20 @@
 {% if resultado %}
-<div class="alert alert-success mt-3">
-    <h6>✅ Importación completada</h6>
-    <ul class="mb-0">
-        <li>Clientes creados: <strong>{{ resultado.clientes_creados }}</strong></li>
-        <li>Clientes saltados: <strong>{{ resultado.clientes_saltados }}</strong></li>
-        <li>Pagos creados: <strong>{{ resultado.pagos_creados }}</strong></li>
-        <li>Pagos saltados: <strong>{{ resultado.pagos_saltados }}</strong></li>
-    </ul>
+<div class="alert alert-success d-flex align-items-start gap-2 mt-3">
+    <i class="bi bi-check-circle-fill mt-1"></i>
+    <div>
+        <strong>Importación completada</strong>
+        <ul class="mb-0 mt-1">
+            <li>Clientes creados: <strong>{{ resultado.clientes_creados }}</strong></li>
+            <li>Clientes saltados: <strong>{{ resultado.clientes_saltados }}</strong></li>
+            <li>Pagos creados: <strong>{{ resultado.pagos_creados }}</strong></li>
+            <li>Pagos saltados: <strong>{{ resultado.pagos_saltados }}</strong></li>
+        </ul>
+    </div>
 </div>
 {% elif error %}
-<div class="alert alert-danger mt-3">
-    ❌ {{ error }}
+<div class="alert alert-danger d-flex align-items-center gap-2 mt-3">
+    <i class="bi bi-x-circle-fill"></i>
+    <span>{{ error }}</span>
 </div>
 {% endif %}
 
@@ -19,8 +23,12 @@
       hx-encoding="multipart/form-data">
     {% csrf_token %}
     <div class="mb-3">
-        <label class="form-label">Seleccioná el archivo Xml</label>
+        <label class="form-label">
+            <i class="bi bi-file-code me-1"></i>Seleccioná el archivo XML
+        </label>
         <input type="file" name="archivo" accept=".xml" class="form-control">
     </div>
-    <button type="submit" class="btn btn-primary">📤 Importar</button>
+    <button type="submit" class="btn btn-primary">
+        <i class="bi bi-upload me-1"></i>Importar
+    </button>
 </form>

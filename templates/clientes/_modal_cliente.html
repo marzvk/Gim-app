@@ -1,9 +1,12 @@
-        <div class="modal-content">
-            <div class="modal-header bg-success text-white">
+<div class="modal-content">
+            <div class="modal-header">
                 <h5 class="modal-title">
-                    {% if cliente %}✏️ Editar Cliente{% else %}👤 Nuevo Cliente{% endif %}
+                    <span class="title-icon {% if cliente %}amber{% else %}green{% endif %}">
+                        <i class="bi bi-{% if cliente %}pencil-square{% else %}person-plus{% endif %}"></i>
+                    </span>
+                    {% if cliente %}Editar Cliente{% else %}Nuevo Cliente{% endif %}
                 </h5>
-                <button type="button" class="btn-close btn-close-white close-modal"></button>
+                <button type="button" class="btn-close close-modal" aria-label="Cerrar"></button>
             </div>
 
             <form hx-post="{% if cliente %}{% url 'editar_cliente' cliente.id %}{% else %}{% url 'crear_cliente' %}{% endif %}"
@@ -12,52 +15,67 @@
                 <div class="modal-body">
 
                     {% if form.non_field_errors %}
-                        <div class="alert alert-danger py-2">{{ form.non_field_errors }}</div>
+                        <div class="alert alert-danger d-flex align-items-center gap-2">{{ form.non_field_errors }}</div>
                     {% endif %}
 
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label">Apellido *</label>
+                            <label class="form-label">
+                                <i class="bi bi-person me-1"></i>Apellido *
+                            </label>
                             {{ form.apellido }}
                             {% if form.apellido.errors %}
-                                <div class="text-danger small">{{ form.apellido.errors|first }}</div>
+                                <div class="text-danger small fw-bold mt-1">{{ form.apellido.errors|first }}</div>
                             {% endif %}
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Nombre *</label>
+                            <label class="form-label">
+                                <i class="bi bi-person me-1"></i>Nombre *
+                            </label>
                             {{ form.nombre }}
                             {% if form.nombre.errors %}
-                                <div class="text-danger small">{{ form.nombre.errors|first }}</div>
+                                <div class="text-danger small fw-bold mt-1">{{ form.nombre.errors|first }}</div>
                             {% endif %}
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Plan *</label>
+                            <label class="form-label">
+                                <i class="bi bi-tag me-1"></i>Plan *
+                            </label>
                             {{ form.plan }}
                             {% if form.plan.errors %}
-                                <div class="text-danger small">{{ form.plan.errors|first }}</div>
+                                <div class="text-danger small fw-bold mt-1">{{ form.plan.errors|first }}</div>
                             {% endif %}
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Turno *</label>
+                            <label class="form-label">
+                                <i class="bi bi-clock me-1"></i>Turno *
+                            </label>
                             {{ form.turno }}
                             {% if form.turno.errors %}
-                                <div class="text-danger small">{{ form.turno.errors|first }}</div>
+                                <div class="text-danger small fw-bold mt-1">{{ form.turno.errors|first }}</div>
                             {% endif %}
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Teléfono</label>
+                            <label class="form-label">
+                                <i class="bi bi-telephone me-1"></i>Teléfono
+                            </label>
                             {{ form.telefono }}
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Email</label>
+                            <label class="form-label">
+                                <i class="bi bi-envelope me-1"></i>Email
+                            </label>
                             {{ form.email }}
                         </div>
                     </div>
                 </div>
 
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary close-modal">Cancelar</button>
-                    <button type="submit" class="btn btn-success">
+                    <button type="button" class="btn btn-outline-secondary close-modal">
+                        <i class="bi bi-x-lg me-1"></i>Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg me-1"></i>
                         {% if cliente %}Guardar cambios{% else %}Crear Cliente{% endif %}
                     </button>
                 </div>

@@ -1,25 +1,41 @@
 <div class="modal-content">
-    <div class="modal-header bg-danger text-white">
-        <h5 class="modal-title">🚫 Confirmar inactivación</h5>
-        <button type="button" class="btn-close btn-close-white close-modal"></button>
+    <div class="modal-header">
+        <h5 class="modal-title">
+            <span class="title-icon red"><i class="bi bi-person-dash-fill"></i></span>
+            Inactivar Cliente
+        </h5>
+        <button type="button" class="btn-close close-modal" aria-label="Cerrar"></button>
     </div>
 
     <div class="modal-body">
-        <p>¿Estás seguro de inactivar este cliente?</p>
-        <div class="alert alert-warning">
-            <strong>Cliente:</strong> {{ cliente.apellido }}, {{ cliente.nombre }}<br>
-            <strong>Plan:</strong> {{ cliente.plan.nombre }}<br>
-            <strong>Turno:</strong> {{ cliente.turno.nombre }}
+        <p class="mb-3">¿Estás seguro de inactivar este cliente? Se mantendrá su historial.</p>
+        <div class="p-3 bg-light rounded-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="bg-danger-subtle text-danger rounded-2 d-flex align-items-center justify-content-center" style="width:40px;height:40px;">
+                    <i class="bi bi-person-dash-fill"></i>
+                </div>
+                <div>
+                    <div class="fw-semibold">{{ cliente.apellido }}, {{ cliente.nombre }}</div>
+                    <small class="text-muted">
+                        {{ cliente.plan.nombre }} — {{ cliente.turno.nombre }}
+                    </small>
+                </div>
+            </div>
         </div>
-        <p class="text-muted small">El cliente se puede reactivar registrando un nuevo pago.</p>
+        <p class="text-muted small mt-3 mb-0">
+            <i class="bi bi-info-circle me-1"></i>Se puede reactivar registrando un nuevo pago.
+        </p>
     </div>
 
     <div class="modal-footer">
-        <button type="button" class="btn btn-secondary close-modal">Cancelar</button>
-        <form hx-post="{% url 'confirmar_inactivar_cliente' cliente.id %}"
-              hx-target="#modal-container">
+        <button type="button" class="btn btn-outline-secondary close-modal">
+            <i class="bi bi-x-lg me-1"></i>Cancelar
+        </button>
+        <form hx-post="{% url 'confirmar_inactivar_cliente' cliente.id %}" hx-target="#modal-container">
             {% csrf_token %}
-            <button type="submit" class="btn btn-danger">Sí, inactivar</button>
+            <button type="submit" class="btn btn-danger">
+                <i class="bi bi-person-dash me-1"></i>Sí, inactivar
+            </button>
         </form>
     </div>
 </div>
