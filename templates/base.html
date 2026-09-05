@@ -14,7 +14,8 @@
     <!-- HTMX -->
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     {% load static %}
-    <link rel="icon" href="{% static 'favicon.ico' %}">
+    <link rel="icon" type="image/svg+xml"
+          href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%232d3bd8'/%3E%3Cg fill='white' transform='translate(6 6)'%3E%3Crect x='7.4' y='10.6' width='9.2' height='2.8' rx='1.4'/%3E%3Crect x='1.8' y='7.6' width='3.2' height='8.8' rx='1.2'/%3E%3Crect x='5' y='9' width='2.4' height='6' rx='1.1'/%3E%3Crect x='16.6' y='9' width='2.4' height='6' rx='1.1'/%3E%3Crect x='19' y='7.6' width='3.2' height='8.8' rx='1.2'/%3E%3C/g%3E%3C/svg%3E">
 
     <!-- NUESTRO CSS -->
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
@@ -34,58 +35,50 @@
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-custom">
         <div class="container-fluid">
-
-            <!-- Logo -->
-            <a class="navbar-brand d-flex align-items-center gap-2" href="{% url 'dashboard' %}">
-                <span>🏋️</span> 
-                <span>Gimnasio</span>
+            <a class="navbar-brand" href="{% url 'dashboard' %}">
+                <span class="brand-mark">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+                        <rect x="7.4" y="10.6" width="9.2" height="2.8" rx="1.4"/>
+                        <rect x="1.8" y="7.6" width="3.2" height="8.8" rx="1.2"/>
+                        <rect x="5" y="9" width="2.4" height="6" rx="1.1"/>
+                        <rect x="16.6" y="9" width="2.4" height="6" rx="1.1"/>
+                        <rect x="19" y="7.6" width="3.2" height="8.8" rx="1.2"/>
+                    </svg>
+                </span>
+                GimApp
             </a>
 
-            <!-- Sección Derecha -->
             <div class="d-flex align-items-center">
-
                 <div class="nav-right-container">
-
-                    <!-- Información de Usuario -->
-                    <div class="user-info-group">
-                        <!-- Icono Bootstrap grande para contraste -->
+                    <a class="user-chip" href="#" tabindex="-1">
                         <i class="bi bi-person-circle"></i>
-                        <div class="d-flex flex-column" style="line-height: 1.1;">
-                            <span>{{ user.username }}</span>
-                            <!-- Badge condicional -->
-                            {% if user.rol == 'dueño' %}
-                                <span class="badge badge-custom badge-owner">Dueño</span>
-                            {% else %}
-                                <span class="badge badge-custom badge-trainer">Profesor</span>
-                            {% endif %}
-                        </div>
-                    </div>
+                        <span class="username">{{ user.username }}</span>
+                        <span class="role-badge {% if user.rol == 'dueño' %}role-badge--owner{% else %}role-badge--trainer{% endif %}">
+                            {{ user.rol|title }}
+                        </span>
+                    </a>
 
-                    <!-- Separador (Ocultamos el separador en móvil para ahorrar espacio) -->
-                    <div class="vr nav-divider d-none d-md-block"></div>
-                    
-                    <!-- Botón Reportes (Agregamos title para el tooltip) -->
+                    <div class="nav-divider d-none d-md-block"></div>
+
                     {% if request.user.rol == 'dueño' %}
-                    <a href="{% url 'reportes' %}" class="btn-action" title="Reportes">
-                        <i class="bi bi-bar-chart-line-fill"></i>
+                    <a href="{% url 'reportes' %}" class="btn-nav" title="Reportes">
+                        <i class="bi bi-bar-chart-line"></i>
                         <span>Reportes</span>
                     </a>
                     {% endif %}
-                
-                    <!-- Botón Cerrar Sesión (Agregamos title para el tooltip) -->
+
                     <form method="post" action="{% url 'logout' %}" class="d-inline">
                         {% csrf_token %}
-                        <button type="submit" class="btn-action" title="Cerrar Sesión">
+                        <button type="submit" class="btn-nav" title="Cerrar Sesión">
                             <i class="bi bi-box-arrow-right"></i>
-                            <span>Cerrar Sesión</span>
-                        </button>              
+                            <span>Salir</span>
+                        </button>
                     </form>
-                
-                    <!-- BOTÓN DARK MODE -->
-                    <button id="theme-toggle" class="btn p-0 border-0 bg-transparent" title="Cambiar Tema">
-                        <i class="bi bi-circle-half"></i>
-                    </button>
 
+                    <button id="theme-toggle-nav" type="button" title="Cambiar tema" aria-label="Cambiar tema">
+                        <i class="bi bi-moon-stars-fill icon-moon" aria-hidden="true"></i>
+                        <i class="bi bi-sun-fill icon-sun" aria-hidden="true"></i>
+                    </button>
                 </div>
             </div>
         </div>
@@ -114,30 +107,20 @@
 <script>
 (function() {
     const html = document.documentElement;
-    const toggleBtn = document.getElementById('theme-toggle');
+    const toggleBtn = document.getElementById('theme-toggle-nav');
     const STORAGE_KEY = 'theme';
 
-    // 1. Detectar preferencia del sistema
     const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-    // 2. Ver si hay preferencia guardada
     const savedTheme = localStorage.getItem(STORAGE_KEY);
+    html.setAttribute('data-bs-theme', savedTheme || (systemPrefersDark ? 'dark' : 'light'));
 
-    // 3. Aplicar tema inicial
-    if (savedTheme) {
-        html.setAttribute('data-bs-theme', savedTheme);
-    } else {
-        html.setAttribute('data-bs-theme', systemPrefersDark ? 'dark' : 'light');
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', () => {
+            const current = html.getAttribute('data-bs-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-bs-theme', next);
+            localStorage.setItem(STORAGE_KEY, next);
+        });
     }
-
-    // 4. Toggle manual
-    toggleBtn.addEventListener('click', () => {
-        const current = html.getAttribute('data-bs-theme');
-        const newTheme = current === 'dark' ? 'light' : 'dark';
-
-        html.setAttribute('data-bs-theme', newTheme);
-        localStorage.setItem(STORAGE_KEY, newTheme);
-    });
-
 })();
 </script>

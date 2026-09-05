@@ -1,79 +1,69 @@
 <!-- Información del turno actual -->
 {% if turno_actual %}
-<div class="alert alert-info">
-    <strong>Turno: {{ turno_actual.nombre }}</strong> 
-    ({{ turno_actual.hora_inicio|time:"H:i" }} - {{ turno_actual.hora_fin|time:"H:i" }})
-    - {{ clientes|length }} cliente{{ clientes|length|pluralize }}
+<div class="alert alert-info d-flex align-items-center gap-2 mb-3">
+    <i class="bi bi-clock-fill"></i>
+    <div>
+        <strong>{{ turno_actual.nombre }}</strong> 
+        ({{ turno_actual.hora_inicio|time:"H:i" }} – {{ turno_actual.hora_fin|time:"H:i" }})
+        — {{ clientes|length }} cliente{{ clientes|length|pluralize }}
+    </div>
 </div>
 {% else %}
-<div class="alert alert-warning">
-    No hay turno activo en este momento
+<div class="alert alert-warning d-flex align-items-center gap-2">
+    <i class="bi bi-exclamation-triangle"></i>
+    <span>No hay turno activo en este momento</span>
 </div>
 {% endif %}
 
-<!-- Tabla de clientes -->
 {% if clientes %}
 <div class="table-responsive">
-    <table class="table table-hover table-sm">
-        <thead class="table-light">
+    <table class="table table-hover">
+        <thead>
             <tr>
                 <th class="text-nowrap">Apellido</th>
                 <th class="text-nowrap">Nombre</th>
-                <!-- Ocultamos Plan en móviles/tablets pequeñas -->
                 <th class="text-nowrap d-none d-md-table-cell">Plan</th>
-                <!-- Ocultamos Teléfono en móviles/tablets pequeñas -->
                 <th class="text-nowrap d-none d-md-table-cell">Teléfono</th>
                 <th class="text-nowrap">Estado</th>
-                <th class="text-nowrap">Acciones</th>
+                <th class="text-nowrap text-end">Acciones</th>
             </tr>
         </thead>
         <tbody>
             {% for cliente in clientes %}
             <tr>
-                <td class="text-nowrap">{{ cliente.apellido }}</td>
+                <td class="text-nowrap fw-medium">{{ cliente.apellido }}</td>
                 <td class="text-nowrap">{{ cliente.nombre }}</td>
-                
-                <!-- Ocultamos Plan en móviles/tablets pequeñas -->
-                <td class="d-none d-md-table-cell">
-                    {{ cliente.plan.nombre }}
-                </td>
-                <!-- Ocultamos Teléfono en móviles/tablets pequeñas -->
+                <td class="d-none d-md-table-cell">{{ cliente.plan.nombre }}</td>
                 <td class="d-none d-md-table-cell text-nowrap">{{ cliente.telefono|default:"-" }}</td>
-                
-                <!-- Estado -->
-                <td class="text-nowrap">
-                    {% if cliente.estado_actual == 'al_dia' %}
-                        <span class="badge bg-success">✅ Al día</span>
-                    {% elif cliente.estado_actual == 'vencido' %}
-                        <span class="badge bg-danger">❌ Vencido</span>
-                    {% elif cliente.estado_actual == 'pendiente_consulta' %}
-                        <span class="badge bg-warning text-dark">⚠️ Pendiente</span>
-                    {% else %}
-                        <span class="badge bg-secondary">🚫 Inactivo</span>
-                    {% endif %}
+                <td>
+                    <span class="badge-status {{ cliente.estado_actual }}">
+                        {% if cliente.estado_actual == 'al_dia' %}<i class="bi bi-check-circle-fill"></i>Al día
+                        {% elif cliente.estado_actual == 'vencido' %}<i class="bi bi-x-circle-fill"></i>Vencido
+                        {% elif cliente.estado_actual == 'pendiente_consulta' %}<i class="bi bi-exclamation-triangle-fill"></i>Pendiente
+                        {% else %}<i class="bi bi-person-dash-fill"></i>Inactivo{% endif %}
+                    </span>
                 </td>
-
-                <!-- Acciones -->
-                <td class="text-nowrap">
-                    <div class="btn-group" role="group">
-                    <button class="btn btn-sm btn-outline-primary"
-                            hx-get="{% url 'modal_historial' cliente.id %}"
-                            hx-target="#modal-container"
-                            title="Ver historial">
-                        📊
-                    </button>
-                    <button class="btn btn-sm btn-primary"
-                            hx-get="{% url 'modal_pago' cliente.id %}"
-                            hx-target="#modal-container"
-                            title="Registrar pago">
-                        💰
-                    </button>
-                    <button class="btn btn-sm btn-outline-secondary"
-                            hx-get="{% url 'editar_cliente' cliente.id %}"
-                            hx-target="#modal-container"
-                            title="Editar cliente">
-                        ✏️
-                    </button>
+                <td class="text-end">
+                    <div class="btn-group">
+                        <button class="btn btn-icon btn-outline-secondary"
+                                hx-get="{% url 'modal_historial' cliente.id %}"
+                                hx-target="#modal-container"
+                                title="Historial de pagos">
+                            <i class="bi bi-clock-history"></i>
+                        </button>
+                        <button class="btn btn-icon btn-primary"
+                                hx-get="{% url 'modal_pago' cliente.id %}"
+                                hx-target="#modal-container"
+                                title="Registrar pago">
+                            <i class="bi bi-cash-stack"></i>
+                        </button>
+                        <button class="btn btn-icon btn-outline-secondary"
+                                hx-get="{% url 'editar_cliente' cliente.id %}"
+                                hx-target="#modal-container"
+                                title="Editar cliente">
+                            <i class="bi bi-pencil-square"></i>
+                        </button>
+                    </div>
                 </td>
             </tr>
             {% endfor %}
@@ -81,7 +71,8 @@
     </table>
 </div>
 {% else %}
-<div class="alert alert-secondary text-center">
-    No hay clientes en este turno
+<div class="alert alert-secondary text-center d-flex align-items-center justify-content-center gap-2">
+    <i class="bi bi-inbox"></i>
+    <span>No hay clientes en este turno</span>
 </div>
 {% endif %}
