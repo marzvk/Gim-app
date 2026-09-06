@@ -33,6 +33,11 @@ urlpatterns = [
         name="confirmar_inactivar_cliente",
     ),
     path("reportes/", views.reportes, name="reportes"),
+    path(
+        "plan/<int:plan_id>/editar/", views.editar_plan, name="editar_plan"
+    ),
+    path("plan/crear/", views.crear_plan, name="crear_plan"),
+    path("planes/", views.planes, name="planes"),
     path("exportar/xml/", views.exportar_xml, name="exportar_xml"),
     path("importar/xml/", views.importar_xml, name="importar_xml"),
     path("exportar/excel/", views.exportar_excel, name="exportar_excel"),

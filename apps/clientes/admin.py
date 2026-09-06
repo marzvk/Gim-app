@@ -5,8 +5,9 @@ from .models import Cliente, Plan
 @admin.register(Plan)
 class PlanAdmin(admin.ModelAdmin):
     list_display = ["nombre", "codigo", "precio", "activo", "orden"]
-    list_editable = ["precio", "activo", "orden"]
+    list_editable = ["activo", "orden"]
     list_filter = ["activo"]
+    readonly_fields = ["precio"]
 
 
 @admin.register(Cliente)

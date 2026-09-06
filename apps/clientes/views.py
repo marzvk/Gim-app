@@ -1,15 +1,16 @@
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from .models import Cliente
+from .models import Cliente, Plan, PlanPrecio
 from apps.clientes.services import (
     obtener_turno_actual,
     calcular_estado_cliente,
     clientes_no_al_dia,
     montos_del_mes,
+    precio_para,
     _fecha_hoy_dev,
 )
 from django.db.models import Q
-from .forms import ClienteForm
+from .forms import ClienteForm, PlanForm
 from .utils import pago_duplicado
 from django.http import HttpResponse
 from django.db import IntegrityError
@@ -185,6 +186,75 @@ def editar_cliente(request, cliente_id):
         form = ClienteForm(instance=cliente)
     return render(
         request, "clientes/_modal_cliente.html", {"form": form, "cliente": cliente}
+    )
+
+
+@rol_requerido("dueño")
+def planes(request):
+    """
+    Página de gestión de planes (solo dueño): muestra precios vigente y pendiente.
+    """
+    from dateutil.relativedelta import relativedelta
+
+    hoy = _fecha_hoy_dev()
+    mes_actual = hoy.replace(day=1)
+    mes_proximo = mes_actual + relativedelta(months=1)
+
+    lista = []
+    for plan in Plan.objects.prefetch_related("precios").all():
+        plan.precio_vigente = precio_para(plan, mes_actual)
+        plan.precio_proximo = precio_para(plan, mes_proximo)
+        plan.cantidad_clientes = plan.clientes.count()
+        lista.append(plan)
+
+    return render(request, "clientes/planes.html", {"planes": lista})
+
+
+@rol_requerido("dueño")
+def crear_plan(request):
+    if request.method == "POST":
+        form = PlanForm(request.POST)
+        if form.is_valid():
+            plan = form.save()
+            PlanPrecio.objects.create(
+                plan=plan,
+                precio=plan.precio,
+                vigencia_desde=_fecha_hoy_dev().replace(day=1),
+            )
+            return HttpResponse(
+                status=204, headers={"HX-Trigger": "planActualizado"}
+            )
+    else:
+        form = PlanForm()
+    return render(request, "clientes/_modal_editar_plan.html", {"form": form})
+
+
+@rol_requerido("dueño")
+def editar_plan(request, plan_id):
+    from dateutil.relativedelta import relativedelta
+
+    plan = get_object_or_404(Plan, id=plan_id)
+    if request.method == "POST":
+        precio_anterior = plan.precio
+        form = PlanForm(request.POST, instance=plan)
+        if form.is_valid():
+            precio_nuevo = form.cleaned_data["precio"]
+            plan = form.save()
+            if precio_nuevo != precio_anterior:
+                # Rige desde el 1º del próximo mes → sin deuda retroactiva.
+                desde = _fecha_hoy_dev().replace(day=1) + relativedelta(months=1)
+                PlanPrecio.objects.update_or_create(
+                    plan=plan,
+                    vigencia_desde=desde,
+                    defaults={"precio": precio_nuevo},
+                )
+            return HttpResponse(
+                status=204, headers={"HX-Trigger": "planActualizado"}
+            )
+    else:
+        form = PlanForm(instance=plan)
+    return render(
+        request, "clientes/_modal_editar_plan.html", {"form": form, "plan": plan}
     )
 
 

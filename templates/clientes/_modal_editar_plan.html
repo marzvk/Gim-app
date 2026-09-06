@@ -1,0 +1,73 @@
+<div class="modal-content">
+    <div class="modal-header">
+        <h5 class="modal-title">
+            <span class="title-icon {% if plan %}amber{% else %}green{% endif %}">
+                <i class="bi bi-{% if plan %}pencil-square{% else %}tags{% endif %}"></i>
+            </span>
+            {% if plan %}Editar Plan{% else %}Nuevo Plan{% endif %}
+        </h5>
+        <button type="button" class="btn-close close-modal" aria-label="Cerrar"></button>
+    </div>
+
+    <form hx-post="{% if plan %}{% url 'editar_plan' plan.id %}{% else %}{% url 'crear_plan' %}{% endif %}"
+          hx-target="#modal-container">
+        {% csrf_token %}
+        <div class="modal-body">
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger d-flex align-items-center gap-2">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            <div class="mb-3">
+                <label class="form-label">
+                    <i class="bi bi-tag me-1"></i>Nombre *
+                </label>
+                {{ form.nombre }}
+                {% if form.nombre.errors %}
+                    <div class="text-danger small fw-bold mt-1">{{ form.nombre.errors|first }}</div>
+                {% endif %}
+            </div>
+
+            {% if form.codigo %}
+            <div class="mb-3">
+                <label class="form-label">
+                    <i class="bi bi-hash me-1"></i>Código *
+                </label>
+                {{ form.codigo }}
+                {% if form.codigo.errors %}
+                    <div class="text-danger small fw-bold mt-1">{{ form.codigo.errors|first }}</div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <div class="mb-3">
+                <label class="form-label">
+                    <i class="bi bi-currency-dollar me-1"></i>Precio mensual *
+                </label>
+                {{ form.precio }}
+                {% if form.precio.errors %}
+                    <div class="text-danger small fw-bold mt-1">{{ form.precio.errors|first }}</div>
+                {% endif %}
+                <small class="form-text text-muted">
+                    Si cambiás el precio, aplica desde el 1º del próximo mes a todos los clientes con este plan.
+                </small>
+            </div>
+
+            <div class="form-check form-switch">
+                {{ form.activo }}
+                <label class="form-check-label" for="{{ form.activo.id_for_label }}">
+                    Plan activo (visible para nuevos clientes)
+                </label>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary close-modal">
+                <i class="bi bi-x-lg me-1"></i>Cancelar
+            </button>
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-check-lg me-1"></i>Guardar
+            </button>
+        </div>
+    </form>
+</div>

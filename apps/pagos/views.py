@@ -15,6 +15,7 @@ from .forms import PagoEditarForm
 def modal_registrar_pago(request, cliente_id):
     cliente = get_object_or_404(Cliente, id=cliente_id)
     resumen_mes = None
+    precio_mes = None
 
     if request.method == "POST":
         pago_instancia = Pago(cliente=cliente, usuario_registrador=request.user)
@@ -35,6 +36,7 @@ def modal_registrar_pago(request, cliente_id):
                 return HttpResponse(status=204, headers={"HX-Trigger": "pagoActualizado"})
     else:
         pagado, precio = montos_del_mes(cliente)
+        precio_mes = precio
         restante = max(precio - pagado, 0)
         mes_inicial = date.today().replace(day=1).strftime("%Y-%m")
         monto_inicial = restante if restante > 0 else precio
@@ -51,7 +53,12 @@ def modal_registrar_pago(request, cliente_id):
     return render(
         request,
         "pagos/_modal_pago.html",
-        {"cliente": cliente, "form": form, "resumen_mes": resumen_mes},
+        {
+            "cliente": cliente,
+            "form": form,
+            "resumen_mes": resumen_mes,
+            "precio_mes": precio_mes,
+        },
     )
 
 

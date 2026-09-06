@@ -5,7 +5,7 @@ from datetime import date
 import os
 
 from apps.usuarios.models import Turno
-from apps.clientes.models import Cliente, Plan
+from apps.clientes.models import Cliente, Plan, PlanPrecio
 from apps.pagos.models import Pago
 from apps.clientes.services import (
     calcular_estado_cliente,
@@ -393,6 +393,146 @@ class NotificacionesNoAlDiaTestCase(BaseTestCase):
         response = self.client.get("/notificaciones/")
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Sin clientes sin pagar")
+
+
+class PrecioVigenteTestCase(BaseTestCase):
+    """Los cambios de precio aplican desde el próximo mes, no son retroactivos."""
+
+    def _cambio_precio_proximo_mes(self, precio=40000):
+        PlanPrecio.objects.create(
+            plan=self.plan, precio=precio, vigencia_desde=date(2026, 5, 1)
+        )
+
+    def test_precio_nuevo_aplica_desde_mes_siguiente(self):
+        self._cambio_precio_proximo_mes()
+        self.assertEqual(montos_del_mes(self.cliente, date(2026, 4, 15)), (0, 35000))
+        self.assertEqual(montos_del_mes(self.cliente, date(2026, 5, 15)), (0, 40000))
+        self.assertEqual(
+            calcular_estado_cliente(self.cliente, date(2026, 5, 15)), "vencido"
+        )
+
+    def test_cambio_precio_no_genera_deuda_retroactiva(self):
+        Pago.objects.create(
+            cliente=self.cliente,
+            fecha_pago=date(2026, 4, 15),
+            mes_cubierto=date(2026, 4, 1),
+            monto=35000,
+            usuario_registrador=self.usuario,
+        )
+        self._cambio_precio_proximo_mes()
+        self.assertEqual(
+            calcular_estado_cliente(self.cliente, date(2026, 4, 15)), "al_dia"
+        )
+
+    def test_parcial_usa_precio_del_mes_no_el_futuro(self):
+        Pago.objects.create(
+            cliente=self.cliente,
+            fecha_pago=date(2026, 4, 15),
+            mes_cubierto=date(2026, 4, 1),
+            monto=20000,
+            usuario_registrador=self.usuario,
+        )
+        self._cambio_precio_proximo_mes(50000)
+        self.assertEqual(
+            calcular_estado_cliente(self.cliente, date(2026, 4, 15)),
+            "deuda_parcial",
+        )
+        pagado, precio = montos_del_mes(self.cliente, date(2026, 4, 15))
+        self.assertEqual((pagado, precio - pagado), (20000, 15000))
+
+    def test_segunda_edicion_mismo_mes_gana_la_ultima(self):
+        self._cambio_precio_proximo_mes(40000)
+        PlanPrecio.objects.update_or_create(
+            plan=self.plan,
+            vigencia_desde=date(2026, 5, 1),
+            defaults={"precio": 45000},
+        )
+        self.assertEqual(montos_del_mes(self.cliente, date(2026, 5, 15)), (0, 45000))
+
+
+@override_settings(AUTHENTICATION_BACKENDS=["django.contrib.auth.backends.ModelBackend"])
+class PlanesViewsTestCase(BaseTestCase):
+    """Gestión de planes desde la app — solo dueño."""
+
+    def setUp(self):
+        super().setUp()
+        self.dueno = User.objects.create_user(
+            username="dueno", password="dueno123", rol="dueño"
+        )
+
+    def test_profesor_no_puede_ver_planes(self):
+        self.client.login(username="testuser", password="test123")
+        response = self.client.get("/planes/")
+        self.assertEqual(response.status_code, 403)
+
+    def test_dueno_puede_ver_planes(self):
+        self.client.login(username="dueno", password="dueno123")
+        response = self.client.get("/planes/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.plan.nombre)
+        self.assertContains(response, "Nuevo Plan")
+
+    def test_dueno_edita_precio_crea_vigencia_proximo_mes(self):
+        self.client.login(username="dueno", password="dueno123")
+        response = self.client.post(
+            f"/plan/{self.plan.id}/editar/",
+            {"nombre": self.plan.nombre, "precio": "40000", "activo": "on"},
+        )
+        self.assertEqual(response.status_code, 204)
+        filas = PlanPrecio.objects.filter(plan=self.plan, precio=40000)
+        self.assertEqual(filas.count(), 1)
+        self.assertGreater(filas.first().vigencia_desde, date.today().replace(day=1))
+
+    def test_profesor_no_edita_plan(self):
+        self.client.login(username="testuser", password="test123")
+        response = self.client.post(
+            f"/plan/{self.plan.id}/editar/",
+            {"nombre": self.plan.nombre, "precio": "40000", "activo": "on"},
+        )
+        self.assertEqual(response.status_code, 403)
+        self.plan.refresh_from_db()
+        self.assertEqual(self.plan.precio, 35000)
+
+    def test_dueno_crea_plan_con_precio_inicial(self):
+        self.client.login(username="dueno", password="dueno123")
+        response = self.client.post(
+            "/plan/crear/",
+            {"codigo": "libre", "nombre": "Libre", "precio": "55000", "activo": "on"},
+        )
+        self.assertEqual(response.status_code, 204)
+        plan = Plan.objects.get(codigo="libre")
+        self.assertEqual(plan.precio, 55000)
+        fila = plan.precios.first()
+        self.assertIsNotNone(fila)
+        self.assertEqual(fila.precio, 55000)
+        self.assertEqual(fila.vigencia_desde, date.today().replace(day=1))
+
+    def test_planes_muestra_precio_pendiente(self):
+        PlanPrecio.objects.create(
+            plan=self.plan, precio=40000, vigencia_desde=date(2026, 10, 1)
+        )
+        self.client.login(username="dueno", password="dueno123")
+        response = self.client.get("/planes/")
+        self.assertContains(response, "40000")
+
+
+@override_settings(
+    DEBUG=True,
+    AUTHENTICATION_BACKENDS=["django.contrib.auth.backends.ModelBackend"],
+)
+class ModalPagoPrecioVigenteTestCase(BaseTestCase):
+    """El modal de pago sugiere el precio vigente del mes, no un futuro pendiente."""
+
+    def test_sugiere_precio_vigente_con_cambio_pendiente(self):
+        PlanPrecio.objects.create(
+            plan=self.plan, precio=40000, vigencia_desde=date(2026, 5, 1)
+        )
+        self.client.login(username="testuser", password="test123")
+        with patch.dict(os.environ, {"FAKE_TODAY": "2026-04-15"}):
+            response = self.client.get(f"/pagos/pago/{self.cliente.id}/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["precio_mes"], 35000)
+        self.assertNotContains(response, "40000")
 
 
 class PagoParcialEstadoTestCase(BaseTestCase):

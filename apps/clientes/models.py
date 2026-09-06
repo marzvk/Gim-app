@@ -35,6 +35,42 @@ class Plan(models.Model):
         return f"{self.nombre} - ${self.precio}"
 
 
+class PlanPrecio(models.Model):
+    """
+    Historial de precios efectivo-por-mes de un plan.
+    Un cambio de precio no es retroactivo: rige desde 'vigencia_desde'.
+    """
+
+    plan = models.ForeignKey(
+        "Plan",
+        on_delete=models.CASCADE,
+        related_name="precios",
+        help_text="Plan al que pertenece este precio",
+    )
+
+    precio = models.DecimalField(
+        max_digits=10, decimal_places=2, help_text="Precio mensual vigente"
+    )
+
+    vigencia_desde = models.DateField(
+        help_text="Mes (normalizado a día 1) desde el que rige este precio"
+    )
+
+    class Meta:
+        verbose_name = "Precio de plan"
+        verbose_name_plural = "Precios de planes"
+        ordering = ["vigencia_desde"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["plan", "vigencia_desde"],
+                name="unique_precio_plan_vigencia",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.plan.nombre} ${self.precio} desde {self.vigencia_desde}"
+
+
 class Cliente(models.Model):
     """Clientes del gim, tienen turno y plan."""
 

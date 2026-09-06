@@ -63,10 +63,27 @@ def calcular_estado_cliente(cliente, fecha_hoy=None):
     return "vencido"
 
 
+def precio_para(plan, mes):
+    """
+    Precio de un plan vigente para un mes calendario dado (efectivo-por-mes).
+    Usa el historial de PlanPrecio; si aún no hay fila, cae al precio actual del plan.
+    """
+    if not plan:
+        return 0
+
+    vigencia = (
+        plan.precios.filter(vigencia_desde__lte=mes)
+        .order_by("-vigencia_desde")
+        .first()
+    )
+    return vigencia.precio if vigencia else plan.precio
+
+
 def montos_del_mes(cliente, fecha_hoy=None):
     """
     Devuelve (pagado, precio_plan) para el mes calendario de fecha_hoy.
     Permite varios pagos por mes: se acumulan en 'pagado'.
+    El precio es el vigente para ese mes (no retroactivo si cambió después).
     """
 
     if fecha_hoy is None:
@@ -77,7 +94,7 @@ def montos_del_mes(cliente, fecha_hoy=None):
         cliente.pagos.filter(mes_cubierto=mes).aggregate(total=Sum("monto"))["total"]
         or 0
     )
-    precio = cliente.plan.precio if cliente.plan else 0
+    precio = precio_para(cliente.plan, mes) if cliente.plan else 0
 
     return pagado, precio
 
