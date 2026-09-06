@@ -23,3 +23,22 @@ def validar_archivo_importacion(archivo, tipo):
     if archivo.size > MAX_ARCHIVO_BYTES:
         return False, "El archivo supera el tamaño máximo de 2MB."
     return True, ""
+
+
+def pago_duplicado(cliente, mes_cubierto, fecha_pago, monto):
+    """
+    True si ya existe un pago exactamente igual (cliente, mes, fecha y monto).
+    Como ahora un mes puede tener varios pagos (parciales), el dedupe es por
+    registro idéntico y no por mes.
+    """
+    from decimal import Decimal
+
+    from apps.pagos.models import Pago
+
+    monto_decimal = Decimal(str(monto))
+    return Pago.objects.filter(
+        cliente=cliente,
+        mes_cubierto=mes_cubierto,
+        fecha_pago=fecha_pago,
+        monto=monto_decimal,
+    ).exists()

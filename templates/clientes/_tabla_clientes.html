@@ -38,6 +38,7 @@
                 <td>
                     <span class="badge-status {{ cliente.estado_actual }}">
                         {% if cliente.estado_actual == 'al_dia' %}<i class="bi bi-check-circle-fill"></i><span class="d-none d-md-inline">Al día</span>
+                        {% elif cliente.estado_actual == 'deuda_parcial' %}<i class="bi bi-exclamation-triangle-fill"></i><span class="d-none d-md-inline">Debe ${{ cliente.monto_debido|floatformat:0 }}</span>
                         {% elif cliente.estado_actual == 'vencido' %}<i class="bi bi-x-circle-fill"></i><span class="d-none d-md-inline">Vencido</span>
                         {% elif cliente.estado_actual == 'pendiente_consulta' %}<i class="bi bi-exclamation-triangle-fill"></i><span class="d-none d-md-inline">Pendiente</span>
                         {% else %}<i class="bi bi-person-dash-fill"></i><span class="d-none d-md-inline">Inactivo</span>{% endif %}

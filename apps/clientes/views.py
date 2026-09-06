@@ -1,9 +1,16 @@
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from .models import Cliente
-from apps.clientes.services import obtener_turno_actual, calcular_estado_cliente
+from apps.clientes.services import (
+    obtener_turno_actual,
+    calcular_estado_cliente,
+    clientes_no_al_dia,
+    montos_del_mes,
+    _fecha_hoy_dev,
+)
 from django.db.models import Q
 from .forms import ClienteForm
+from .utils import pago_duplicado
 from django.http import HttpResponse
 from django.db import IntegrityError
 from apps.usuarios.decorators import rol_requerido
@@ -52,18 +59,25 @@ def dashboard(request):
         )
 
     # Optimización: traer relaciones en una query
-    clientes_qs = clientes_qs.select_related("turno", "usuario_creador")
+    clientes_qs = clientes_qs.select_related("turno", "usuario_creador", "plan")
 
     # Calcular estado y aplicar filtro de estado
     clientes = []
     for cliente in clientes_qs:
         cliente.estado_actual = calcular_estado_cliente(cliente)
 
+        if cliente.estado_actual == "deuda_parcial":
+            pagado, precio = montos_del_mes(cliente)
+            cliente.monto_debido = max(precio - pagado, 0)
+
         # Filtrar por estado si se seleccionó uno
         if filtro_estado:
             if filtro_estado == "al_dia" and cliente.estado_actual != "al_dia":
                 continue
-            elif filtro_estado == "vencido" and cliente.estado_actual != "vencido":
+            elif (
+                filtro_estado == "vencido"
+                and cliente.estado_actual not in ("vencido", "deuda_parcial")
+            ):
                 continue
             elif (
                 filtro_estado == "pendiente"
@@ -114,6 +128,31 @@ def modal_acciones_cliente(request, cliente_id):
     """
     cliente = get_object_or_404(Cliente, id=cliente_id)
     return render(request, "clientes/_modal_acciones.html", {"cliente": cliente})
+
+
+@login_required
+def resumen_notificaciones(request):
+    """
+    Devuelve el fragmento del badge (vencidos + parciales) — refresco por evento, no en load.
+    """
+    clientes = clientes_no_al_dia(request.user)
+    return render(
+        request,
+        "clientes/_notif_badge.html",
+        {"cantidad_no_al_dia": len(clientes)},
+    )
+
+
+@login_required
+def modal_notificaciones(request):
+    """
+    Muestra el modal con clientes que no completaron el mes (solo por clic).
+    """
+    return render(
+        request,
+        "clientes/_modal_notificaciones.html",
+        {"clientes": clientes_no_al_dia(request.user)},
+    )
 
 
 @login_required
@@ -171,7 +210,7 @@ def reportes(request):
     from datetime import date, datetime
     from dateutil.relativedelta import relativedelta
 
-    hoy = date.today()
+    hoy = _fecha_hoy_dev()
     mes_actual_real = hoy.replace(day=1)
 
     # Leer mes desde query param, si no hay usar el actual
@@ -203,7 +242,7 @@ def reportes(request):
             estado = calcular_estado_cliente(cliente, hoy)
             if estado == "al_dia":
                 al_dia += 1
-            elif estado == "vencido":
+            elif estado in ("vencido", "deuda_parcial"):
                 vencidos += 1
             elif estado == "pendiente_consulta":
                 pendientes += 1
@@ -398,8 +437,8 @@ def importar_xml(request):
             pagos_saltados += 1
             continue
 
-        # Saltar si ya existe pago para ese cliente y mes
-        if Pago.objects.filter(cliente=cliente, mes_cubierto=mes_cubierto).exists():
+        # Saltar si ya existe un pago idéntico para ese cliente y mes
+        if pago_duplicado(cliente, mes_cubierto, fecha_pago, monto):
             pagos_saltados += 1
             continue
 
@@ -688,7 +727,7 @@ def importar_excel(request):
                 pagos_saltados += 1
                 continue
 
-            if Pago.objects.filter(cliente=cliente, mes_cubierto=mes_cubierto).exists():
+            if pago_duplicado(cliente, mes_cubierto, fecha_pago, monto):
                 pagos_saltados += 1
                 continue
 
@@ -932,7 +971,7 @@ def importar_csv(request):
                 pagos_saltados += 1
                 continue
 
-            if Pago.objects.filter(cliente=cliente, mes_cubierto=mes_cubierto).exists():
+            if pago_duplicado(cliente, mes_cubierto, fecha_pago, monto):
                 pagos_saltados += 1
                 continue
 

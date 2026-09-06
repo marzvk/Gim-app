@@ -48,12 +48,6 @@ class Pago(models.Model):
         verbose_name = "Pago"
         verbose_name_plural = "Pagos"
         ordering = ["-fecha_pago"]
-        constraints = [
-            models.UniqueConstraint(
-                fields=["cliente", "mes_cubierto"],
-                name="unique_pago_por_mes",
-            )
-        ]
 
     def __str__(self):
         return f"{self.cliente} - {self.mes_cubierto.strftime('%m/%Y')} - ${self.monto}"

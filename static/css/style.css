@@ -227,6 +227,24 @@ main.container-fluid {
     color: var(--ink);
 }
 
+.notif-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 0.35em;
+    display: grid;
+    place-items: center;
+    background: var(--danger);
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    line-height: 1;
+    border-radius: 999px;
+    pointer-events: none;
+}
+
 #theme-toggle-nav {
     display: grid;
     place-items: center;
@@ -338,6 +356,7 @@ main.container-fluid {
 .badge-status.vencido { background: var(--danger-soft); color: var(--danger); }
 .badge-status.pendiente,
 .badge-status.pendiente_consulta { background: var(--warning-soft); color: var(--warning); }
+.badge-status.deuda_parcial { background: var(--warning-soft); color: var(--warning); }
 .badge-status.inactivo { background: var(--neutral-soft); color: var(--ink-2); }
 
 /* =========================================
@@ -497,6 +516,12 @@ main.container-fluid {
 
 .alert-secondary { background: var(--neutral-soft); color: var(--ink-2); }
 .alert-secondary .bi { color: var(--ink-2); }
+
+.alert-success { background: var(--success-soft); color: var(--ink); }
+.alert-success .bi { color: var(--success); }
+
+.telefono-link { color: inherit; text-decoration: none; }
+.telefono-link:hover { color: var(--accent); }
 
 /* =========================================
    MODALS

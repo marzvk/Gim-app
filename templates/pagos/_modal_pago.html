@@ -19,6 +19,19 @@
                 </div>
             </div>
 
+            {% if resumen_mes %}
+            <div class="alert alert-warning d-flex align-items-center gap-2">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <div>
+                    Ya pagó <strong>${{ resumen_mes.pagado|floatformat:0 }}</strong>
+                    de ${{ resumen_mes.precio|floatformat:0 }} este mes.
+                    {% if resumen_mes.restante > 0 %}
+                    Resta <strong>${{ resumen_mes.restante|floatformat:0 }}</strong>.
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
             {% if form.non_field_errors %}
                 <div class="alert alert-danger d-flex align-items-center gap-2">{{ form.non_field_errors }}</div>
             {% endif %}

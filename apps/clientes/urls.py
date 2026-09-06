@@ -15,6 +15,16 @@ urlpatterns = [
     ),
     path("crear/", views.crear_cliente, name="crear_cliente"),
     path(
+        "notificaciones/resumen/",
+        views.resumen_notificaciones,
+        name="resumen_notificaciones",
+    ),
+    path(
+        "notificaciones/",
+        views.modal_notificaciones,
+        name="modal_notificaciones",
+    ),
+    path(
         "cliente/<int:cliente_id>/editar/", views.editar_cliente, name="editar_cliente"
     ),
     path(

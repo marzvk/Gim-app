@@ -1,0 +1,7 @@
+{% if cantidad_no_al_dia %}
+<span id="notif-badge"
+      class="notif-badge"
+      hx-get="{% url 'resumen_notificaciones' %}"
+      hx-trigger="notifRefresh from:body"
+      hx-swap="outerHTML">{{ cantidad_no_al_dia }}</span>
+{% endif %}

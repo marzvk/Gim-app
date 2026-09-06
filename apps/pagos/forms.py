@@ -42,22 +42,10 @@ class PagoEditarForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        cliente = self.instance.cliente if self.instance else None
-        mes_cubierto = cleaned_data.get("mes_cubierto")
         monto = cleaned_data.get("monto")
 
-        if mes_cubierto and cliente:
-            query = Pago.objects.filter(
-                cliente=cliente,
-                mes_cubierto__year=mes_cubierto.year,
-                mes_cubierto__month=mes_cubierto.month,
-            )
-            if self.instance.pk:
-                query = query.exclude(pk=self.instance.pk)
-            if query.exists():
-                mes_nombre = mes_cubierto.strftime("%B %Y")
-                self.add_error("mes_cubierto", f"Ya existe un pago para {mes_nombre}.")
-
+        # Permite varios pagos parciales para el mismo mes;
+        # solo se valida que el monto sea positivo.
         if monto is not None and monto <= 0:
             self.add_error("monto", "El monto debe ser mayor a cero.")
 

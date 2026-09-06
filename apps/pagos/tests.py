@@ -2,6 +2,7 @@ from django.test import TestCase, override_settings
 from django.contrib.auth import get_user_model
 from datetime import date
 from django.db import IntegrityError
+from unittest.mock import patch
 
 from apps.usuarios.models import Turno
 from apps.clientes.models import Cliente, Plan
@@ -68,7 +69,7 @@ class PagoFormTestCase(BaseTestCase):
         self.assertFalse(form.is_valid())
         self.assertIn("monto", form.errors)
 
-    def test_duplicado_mismo_mes_invalido(self):
+    def test_segundo_pago_mismo_mes_valido(self):
         # Pago existente para abril
         Pago.objects.create(
             cliente=self.cliente,
@@ -77,14 +78,13 @@ class PagoFormTestCase(BaseTestCase):
             monto=35000,
             usuario_registrador=self.usuario,
         )
-        # Intentar crear otro pago para abril
+        # Crear otro pago parcial para abril → válido (se acumula)
         pago_instancia = Pago(cliente=self.cliente, usuario_registrador=self.usuario)
         form = PagoEditarForm(
-            data={"mes_cubierto": "2026-04", "monto": "35000", "observaciones": ""},
+            data={"mes_cubierto": "2026-04", "monto": "15000", "observaciones": ""},
             instance=pago_instancia,
         )
-        self.assertFalse(form.is_valid())
-        self.assertIn("mes_cubierto", form.errors)
+        self.assertTrue(form.is_valid())
 
     def test_editar_pago_no_cuenta_como_duplicado(self):
         # Pago existente para abril
@@ -143,12 +143,12 @@ class RegistrarPagoViewTestCase(BaseTestCase):
         self.assertEqual(response.status_code, 204)
         self.assertTrue(Pago.objects.filter(cliente=self.cliente).exists())
 
-    def test_no_permite_pago_duplicado(self):
+    def test_permite_segundo_pago_mismo_mes(self):
         Pago.objects.create(
             cliente=self.cliente,
             fecha_pago=date(2026, 4, 1),
             mes_cubierto=date(2026, 4, 1),
-            monto=35000,
+            monto=20000,
             usuario_registrador=self.usuario,
         )
         self.client.login(username="testuser", password="test123")
@@ -156,12 +156,12 @@ class RegistrarPagoViewTestCase(BaseTestCase):
             f"/pagos/pago/{self.cliente.id}/",
             {
                 "mes_cubierto": "2026-04",
-                "monto": "35000",
+                "monto": "15000",
                 "observaciones": "",
             },
         )
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(Pago.objects.filter(cliente=self.cliente).count(), 1)
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(Pago.objects.filter(cliente=self.cliente).count(), 2)
 
 
 @override_settings(AUTHENTICATION_BACKENDS=["django.contrib.auth.backends.ModelBackend"])
@@ -247,22 +247,25 @@ class PagoModelTestCase(BaseTestCase):
         pago.refresh_from_db()
         self.assertEqual(pago.mes_cubierto.day, 1)
 
-    def test_unique_constraint_previene_duplicado(self):
+    def test_varios_pagos_mismo_mes_permitidos(self):
         Pago.objects.create(
             cliente=self.cliente,
             fecha_pago=date(2026, 4, 1),
             mes_cubierto=date(2026, 4, 1),
-            monto=35000,
+            monto=20000,
             usuario_registrador=self.usuario,
         )
-        with self.assertRaises(IntegrityError):
-            Pago.objects.create(
-                cliente=self.cliente,
-                fecha_pago=date(2026, 4, 5),
-                mes_cubierto=date(2026, 4, 1),
-                monto=35000,
-                usuario_registrador=self.usuario,
-            )
+        Pago.objects.create(
+            cliente=self.cliente,
+            fecha_pago=date(2026, 4, 5),
+            mes_cubierto=date(2026, 4, 1),
+            monto=15000,
+            usuario_registrador=self.usuario,
+        )
+        self.assertEqual(
+            Pago.objects.filter(cliente=self.cliente, mes_cubierto=date(2026, 4, 1)).count(),
+            2,
+        )
 
     def test_clientes_distintos_pueden_pagar_mismo_mes(self):
         cliente2 = Cliente.objects.create(
@@ -295,21 +298,15 @@ class IntegrityErrorViewTestCase(BaseTestCase):
     """Tests para manejo de IntegrityError en vistas"""
 
     def test_integrity_error_en_registrar_pago_view(self):
-        Pago.objects.create(
-            cliente=self.cliente,
-            fecha_pago=date(2026, 4, 1),
-            mes_cubierto=date(2026, 4, 1),
-            monto=35000,
-            usuario_registrador=self.usuario,
-        )
         self.client.login(username="testuser", password="test123")
-        response = self.client.post(
-            f"/pagos/pago/{self.cliente.id}/",
-            {
-                "mes_cubierto": "2026-04",
-                "monto": "35000",
-                "observaciones": "",
-            },
-        )
+        with patch("apps.pagos.views.Pago.save", side_effect=IntegrityError):
+            response = self.client.post(
+                f"/pagos/pago/{self.cliente.id}/",
+                {
+                    "mes_cubierto": "2026-04",
+                    "monto": "35000",
+                    "observaciones": "",
+                },
+            )
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(Pago.objects.filter(cliente=self.cliente).count(), 1)
+        self.assertEqual(Pago.objects.filter(cliente=self.cliente).count(), 0)

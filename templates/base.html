@@ -67,6 +67,15 @@
                     </a>
                     {% endif %}
 
+                    <button type="button" class="btn-nav position-relative" title="Vencidos"
+                            aria-label="Clientes vencidos"
+                            hx-get="{% url 'modal_notificaciones' %}"
+                            hx-target="#modal-container">
+                        <i class="bi bi-bell"></i>
+                        <span>Vencidos</span>
+                        {% include 'clientes/_notif_badge.html' %}
+                    </button>
+
                     <form method="post" action="{% url 'logout' %}" class="d-inline">
                         {% csrf_token %}
                         <button type="submit" class="btn-nav" title="Cerrar Sesión">

@@ -148,21 +148,29 @@ function recargarTabla() {
     });
 }
 
+// Refresca el badge de vencidos del navbar (solo tras acciones del usuario)
+function refrescarNotificaciones() {
+    document.body.dispatchEvent(new Event('notifRefresh'));
+}
+
 // 3. EVENTOS DE ACTUALIZACIÓN
 // Escuchan cuando se guardan datos, muestran toast y REFRESCAN LA TABLA
 document.body.addEventListener('pagoActualizado', function() {
     window.showToast('Pago registrado correctamente', 'success');
     recargarTabla(); // AQUI ESTA LA MAGIA: Recarga el estado
+    refrescarNotificaciones();
 });
 
 document.body.addEventListener('clienteActualizado', function() {
     window.showToast('Cliente guardado', 'success');
     recargarTabla();
+    refrescarNotificaciones();
 });
 
 document.body.addEventListener('clienteBorrado', function() {
     window.showToast('Cliente eliminado', 'error');
     recargarTabla();
+    refrescarNotificaciones();
 });
 </script>
 {% endblock %}

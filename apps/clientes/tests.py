@@ -2,11 +2,17 @@ from django.test import TestCase, override_settings
 from django.contrib.auth import get_user_model
 from unittest.mock import patch
 from datetime import date
+import os
 
 from apps.usuarios.models import Turno
 from apps.clientes.models import Cliente, Plan
 from apps.pagos.models import Pago
-from apps.clientes.services import calcular_estado_cliente, marcar_clientes_inactivos
+from apps.clientes.services import (
+    calcular_estado_cliente,
+    marcar_clientes_inactivos,
+    clientes_no_al_dia,
+    montos_del_mes,
+)
 
 User = get_user_model()
 
@@ -242,3 +248,298 @@ class AccionesClienteViewTestCase(BaseTestCase):
         self.client.login(username="testuser", password="test123")
         response = self.client.get("/cliente/9999/acciones/")
         self.assertEqual(response.status_code, 404)
+
+
+@override_settings(AUTHENTICATION_BACKENDS=["django.contrib.auth.backends.ModelBackend"])
+class NotificacionesNoAlDiaTestCase(BaseTestCase):
+    """Tests de notificaciones: clientes sin completar el mes (vencido o parcial)"""
+
+    def setUp(self):
+        super().setUp()
+        self.turno2 = Turno.objects.create(
+            nombre="Tarde", hora_inicio="14:00", hora_fin="19:00", activo=True
+        )
+        self.dueno = User.objects.create_user(
+            username="dueno", password="dueno123", rol="dueño"
+        )
+        self.profesor = User.objects.create_user(
+            username="profesor",
+            password="prof123",
+            rol="profesor",
+            turno_asignado=self.turno,
+        )
+        self.cliente2 = Cliente.objects.create(
+            nombre="Ana",
+            apellido="Gómez",
+            plan=self.plan,
+            turno=self.turno2,
+            activo=True,
+            usuario_creador=self.usuario,
+        )
+
+    def _mock_hoy(self):
+        return patch("apps.clientes.services.date")
+
+    def test_no_al_dia_dueño_todos(self):
+        with self._mock_hoy() as mock_date:
+            mock_date.today.return_value = date(2026, 4, 15)
+            mock_date.side_effect = lambda *a, **kw: date(*a, **kw)
+            self.assertEqual(len(clientes_no_al_dia(self.dueno)), 2)
+
+    def test_no_al_dia_profesor_solo_su_turno(self):
+        with self._mock_hoy() as mock_date:
+            mock_date.today.return_value = date(2026, 4, 15)
+            mock_date.side_effect = lambda *a, **kw: date(*a, **kw)
+            clientes = clientes_no_al_dia(self.profesor)
+            self.assertEqual(len(clientes), 1)
+            self.assertEqual(clientes[0].pk, self.cliente.pk)
+
+    def test_no_al_dia_profesor_sin_turno_vacio(self):
+        profesor_sin_turno = User.objects.create_user(
+            username="profesor2", password="prof123", rol="profesor"
+        )
+        with self._mock_hoy() as mock_date:
+            mock_date.today.return_value = date(2026, 4, 15)
+            mock_date.side_effect = lambda *a, **kw: date(*a, **kw)
+            self.assertEqual(clientes_no_al_dia(profesor_sin_turno), [])
+
+    def test_parcial_cuenta_como_no_al_dia(self):
+        Pago.objects.create(
+            cliente=self.cliente2,
+            fecha_pago=date(2026, 4, 15),
+            mes_cubierto=date(2026, 4, 1),
+            monto=20000,
+            usuario_registrador=self.usuario,
+        )
+        with self._mock_hoy() as mock_date:
+            mock_date.today.return_value = date(2026, 4, 15)
+            mock_date.side_effect = lambda *a, **kw: date(*a, **kw)
+            clientes = clientes_no_al_dia(self.dueno)
+        self.assertEqual(len(clientes), 2)
+        parcial = next(c for c in clientes if c.pk == self.cliente2.pk)
+        self.assertEqual(parcial.estado_actual, "deuda_parcial")
+        self.assertEqual(parcial.monto_debido, 15000)
+
+    def test_pago_completo_saca_de_la_lista(self):
+        Pago.objects.create(
+            cliente=self.cliente,
+            fecha_pago=date(2026, 4, 15),
+            mes_cubierto=date(2026, 4, 1),
+            monto=35000,
+            usuario_registrador=self.usuario,
+        )
+        with self._mock_hoy() as mock_date:
+            mock_date.today.return_value = date(2026, 4, 15)
+            mock_date.side_effect = lambda *a, **kw: date(*a, **kw)
+            self.assertEqual(len(clientes_no_al_dia(self.dueno)), 1)
+
+    def test_badge_cuenta_vencido_y_parcial(self):
+        Pago.objects.create(
+            cliente=self.cliente2,
+            fecha_pago=date(2026, 4, 15),
+            mes_cubierto=date(2026, 4, 1),
+            monto=20000,
+            usuario_registrador=self.usuario,
+        )
+        self.client.login(username="dueno", password="dueno123")
+        with self._mock_hoy() as mock_date:
+            mock_date.today.return_value = date(2026, 4, 15)
+            mock_date.side_effect = lambda *a, **kw: date(*a, **kw)
+            response = self.client.get("/")
+        self.assertEqual(response.context["cantidad_no_al_dia"], 2)
+        self.assertContains(response, "notif-badge")
+
+    def test_modal_dueño_muestra_todos_los_turnos(self):
+        self.client.login(username="dueno", password="dueno123")
+        with self._mock_hoy() as mock_date:
+            mock_date.today.return_value = date(2026, 4, 15)
+            mock_date.side_effect = lambda *a, **kw: date(*a, **kw)
+            response = self.client.get("/notificaciones/")
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "clientes/_modal_notificaciones.html")
+        self.assertContains(response, "Pérez,")
+        self.assertContains(response, "Gómez,")
+
+    def test_modal_profesor_solo_su_turno(self):
+        self.client.login(username="profesor", password="prof123")
+        with self._mock_hoy() as mock_date:
+            mock_date.today.return_value = date(2026, 4, 15)
+            mock_date.side_effect = lambda *a, **kw: date(*a, **kw)
+            response = self.client.get("/notificaciones/")
+        self.assertContains(response, "Pérez,")
+        self.assertNotContains(response, "Gómez,")
+
+    def test_modal_muestra_a_debe_parcial(self):
+        Pago.objects.create(
+            cliente=self.cliente2,
+            fecha_pago=date(2026, 4, 15),
+            mes_cubierto=date(2026, 4, 1),
+            monto=20000,
+            usuario_registrador=self.usuario,
+        )
+        self.client.login(username="dueno", password="dueno123")
+        with self._mock_hoy() as mock_date:
+            mock_date.today.return_value = date(2026, 4, 15)
+            mock_date.side_effect = lambda *a, **kw: date(*a, **kw)
+            response = self.client.get("/notificaciones/")
+        self.assertContains(response, "Aún debe")
+        self.assertContains(response, "$15000")
+
+    def test_modal_sin_pendientes_muestra_vacio(self):
+        profesor_sin_turno = User.objects.create_user(
+            username="profesor3", password="prof123", rol="profesor"
+        )
+        self.client.login(username="profesor3", password="prof123")
+        response = self.client.get("/notificaciones/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Sin clientes sin pagar")
+
+
+class PagoParcialEstadoTestCase(BaseTestCase):
+    """Tests del estado con pagos parciales acumulados por mes"""
+
+    def _crear_pago(self, monto, mes, dia=15):
+        Pago.objects.create(
+            cliente=self.cliente,
+            fecha_pago=date(2026, 4, dia),
+            mes_cubierto=mes,
+            monto=monto,
+            usuario_registrador=self.usuario,
+        )
+
+    def test_dos_pagos_suman_y_completan_mes(self):
+        self._crear_pago(20000, date(2026, 4, 1))
+        self._crear_pago(15000, date(2026, 4, 1))
+        self.assertEqual(
+            calcular_estado_cliente(self.cliente, date(2026, 4, 15)), "al_dia"
+        )
+        self.assertEqual(
+            montos_del_mes(self.cliente, date(2026, 4, 15)), (35000, 35000)
+        )
+
+    def test_parcial_despues_del_10_deuda_parcial(self):
+        self._crear_pago(20000, date(2026, 4, 1))
+        self.assertEqual(
+            calcular_estado_cliente(self.cliente, date(2026, 4, 15)),
+            "deuda_parcial",
+        )
+        pagado, precio = montos_del_mes(self.cliente, date(2026, 4, 15))
+        self.assertEqual((pagado, precio - pagado), (20000, 15000))
+
+    def test_parcial_antes_del_10_al_dia(self):
+        self._crear_pago(20000, date(2026, 4, 1), dia=8)
+        self.assertEqual(
+            calcular_estado_cliente(self.cliente, date(2026, 4, 8)), "al_dia"
+        )
+
+    def test_pago_exacto_del_plan_al_dia(self):
+        self._crear_pago(35000, date(2026, 4, 1))
+        self.assertEqual(
+            calcular_estado_cliente(self.cliente, date(2026, 4, 15)), "al_dia"
+        )
+
+    def test_sin_pago_despues_del_10_vencido(self):
+        self.assertEqual(
+            calcular_estado_cliente(self.cliente, date(2026, 4, 15)), "vencido"
+        )
+
+
+@override_settings(DEBUG=True)
+class FakeTodayTestCase(BaseTestCase):
+    """FAKE_TODAY (solo DEBUG) permite simular la fecha en desarrollo"""
+
+    def test_fake_today_simula_vencido(self):
+        with patch.dict(os.environ, {"FAKE_TODAY": "2026-09-15"}):
+            self.assertEqual(calcular_estado_cliente(self.cliente), "vencido")
+
+    def test_fake_today_parcial(self):
+        Pago.objects.create(
+            cliente=self.cliente,
+            fecha_pago=date(2026, 9, 12),
+            mes_cubierto=date(2026, 9, 1),
+            monto=15000,
+            usuario_registrador=self.usuario,
+        )
+        with patch.dict(os.environ, {"FAKE_TODAY": "2026-09-15"}):
+            self.assertEqual(calcular_estado_cliente(self.cliente), "deuda_parcial")
+            self.assertEqual(montos_del_mes(self.cliente), (15000, 35000))
+
+
+@override_settings(DEBUG=True)
+class FakeTodayNoEnvTestCase(BaseTestCase):
+    """Sin FAKE_TODAY usa la fecha real del sistema"""
+
+    def test_sin_env_usar_fecha_real(self):
+        self.assertEqual(
+            calcular_estado_cliente(self.cliente, date(2026, 4, 15)), "vencido"
+        )
+
+
+@override_settings(AUTHENTICATION_BACKENDS=["django.contrib.auth.backends.ModelBackend"])
+class RegistroPagoParcialViewTestCase(BaseTestCase):
+    """El formulario y la vista permiten varios pagos por mes"""
+
+    def test_form_segundo_pago_mismo_mes_valido(self):
+        from apps.pagos.forms import PagoEditarForm
+
+        Pago.objects.create(
+            cliente=self.cliente,
+            fecha_pago=date(2026, 4, 15),
+            mes_cubierto=date(2026, 4, 1),
+            monto=20000,
+            usuario_registrador=self.usuario,
+        )
+        instancia = Pago(cliente=self.cliente, usuario_registrador=self.usuario)
+        form = PagoEditarForm(
+            data={
+                "mes_cubierto": "2026-04",
+                "monto": "15000",
+                "observaciones": "",
+            },
+            instance=instancia,
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+
+    def test_post_segundo_pago_mismo_mes_204(self):
+        from django.test import Client
+
+        Pago.objects.create(
+            cliente=self.cliente,
+            fecha_pago=date.today(),
+            mes_cubierto=date.today().replace(day=1),
+            monto=20000,
+            usuario_registrador=self.usuario,
+        )
+        c = Client()
+        c.login(username="testuser", password="test123")
+        response = c.post(
+            f"/pagos/pago/{self.cliente.id}/",
+            {
+                "mes_cubierto": date.today().strftime("%Y-%m"),
+                "monto": "15000",
+                "observaciones": "",
+            },
+        )
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(
+            Pago.objects.filter(
+                cliente=self.cliente, mes_cubierto=date.today().replace(day=1)
+            ).count(),
+            2,
+        )
+
+    def test_get_modal_prefill_resta_cuando_parcial(self):
+        Pago.objects.create(
+            cliente=self.cliente,
+            fecha_pago=date.today(),
+            mes_cubierto=date.today().replace(day=1),
+            monto=20000,
+            usuario_registrador=self.usuario,
+        )
+        self.client.login(username="testuser", password="test123")
+        response = self.client.get(f"/pagos/pago/{self.cliente.id}/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["resumen_mes"]["restante"], 15000)
+        self.assertEqual(
+            response.context["form"].initial["monto"], 15000
+        )

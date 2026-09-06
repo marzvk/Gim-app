@@ -1,0 +1,55 @@
+<div class="modal-content">
+    <div class="modal-header">
+        <h5 class="modal-title">
+            <span class="title-icon red">
+                <i class="bi bi-bell"></i>
+            </span>
+            Sin mes al día
+        </h5>
+        <button type="button" class="btn-close close-modal" aria-label="Cerrar"></button>
+    </div>
+    <div class="modal-body">
+        {% if clientes %}
+        <p class="small text-muted mb-3">
+            <i class="bi bi-x-circle-fill text-danger me-1"></i>{{ clientes|length }}
+            cliente{{ clientes|length|pluralize }} sin completar el mes de
+            {{ clientes.0.mes_actual|date:"M Y"|lower }}
+        </p>
+        <div class="list-group list-group-flush">
+            {% for cliente in clientes %}
+            <div class="list-group-item d-flex align-items-center justify-content-between gap-2 px-0">
+                <div class="flex-grow-1 min-w-0">
+                    <div class="fw-semibold text-truncate">{{ cliente.apellido }}, {{ cliente.nombre }}</div>
+                    <small class="text-muted d-block">
+                        <i class="bi bi-clock me-1"></i>{{ cliente.turno.nombre }}
+                        {% if cliente.estado_actual == 'deuda_parcial' %}
+                        <span class="d-block mt-1 text-warning fw-semibold">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i>Aún debe
+                            ${{ cliente.monto_debido|floatformat:0 }}
+                            de ${{ cliente.precio_plan|floatformat:0 }} este mes
+                        </span>
+                        {% else %}
+                        <span class="d-block mt-1 text-danger fw-semibold">
+                            <i class="bi bi-x-circle-fill me-1"></i>Sin pagar
+                            {{ cliente.mes_actual|date:"M Y"|lower }} — completa
+                            ${{ cliente.precio_plan|floatformat:0 }}
+                        </span>
+                        {% endif %}
+                    </small>
+                </div>
+                <button type="button" class="btn btn-primary btn-sm flex-shrink-0"
+                        hx-get="{% url 'modal_pago' cliente.id %}"
+                        hx-target="#modal-container">
+                    <i class="bi bi-cash-stack me-1"></i>Pagar
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="alert alert-success mb-0 text-center">
+            <i class="bi bi-check-circle-fill me-1"></i>
+            Sin clientes sin pagar
+        </div>
+        {% endif %}
+    </div>
+</div>

@@ -5,6 +5,7 @@ from django.http import HttpResponse
 from django.db import IntegrityError
 
 from apps.clientes.models import Cliente
+from apps.clientes.services import montos_del_mes
 from apps.usuarios.decorators import rol_requerido
 from .models import Pago
 from .forms import PagoEditarForm
@@ -13,6 +14,7 @@ from .forms import PagoEditarForm
 @login_required
 def modal_registrar_pago(request, cliente_id):
     cliente = get_object_or_404(Cliente, id=cliente_id)
+    resumen_mes = None
 
     if request.method == "POST":
         pago_instancia = Pago(cliente=cliente, usuario_registrador=request.user)
@@ -23,7 +25,7 @@ def modal_registrar_pago(request, cliente_id):
                 pago.fecha_pago = date.today()
                 pago.save()
             except IntegrityError:
-                form.add_error("mes_cubierto", "Ya existe un pago para este mes.")
+                form.add_error("mes_cubierto", "No se pudo registrar el pago, intentalo de nuevo.")
             else:
                 # Si el cliente estaba inactivo, reactivarlo
                 if not cliente.activo:
@@ -32,13 +34,25 @@ def modal_registrar_pago(request, cliente_id):
 
                 return HttpResponse(status=204, headers={"HX-Trigger": "pagoActualizado"})
     else:
+        pagado, precio = montos_del_mes(cliente)
+        restante = max(precio - pagado, 0)
         mes_inicial = date.today().replace(day=1).strftime("%Y-%m")
-        monto_inicial = cliente.plan.precio if cliente.plan else 0
+        monto_inicial = restante if restante > 0 else precio
         form = PagoEditarForm(
             initial={"mes_cubierto": mes_inicial, "monto": monto_inicial}
         )
+        if pagado > 0:
+            resumen_mes = {
+                "pagado": pagado,
+                "precio": precio,
+                "restante": restante,
+            }
 
-    return render(request, "pagos/_modal_pago.html", {"cliente": cliente, "form": form})
+    return render(
+        request,
+        "pagos/_modal_pago.html",
+        {"cliente": cliente, "form": form, "resumen_mes": resumen_mes},
+    )
 
 
 @login_required

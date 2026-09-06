@@ -1,22 +1,51 @@
+import os
 from datetime import date, timedelta
 from dateutil.relativedelta import relativedelta
-from django.db.models import Max
+from django.conf import settings
+from django.db.models import Max, Sum
+
+
+def _fecha_hoy_dev():
+    """
+    Fecha usada como "hoy".
+    Solo en desarrollo (DEBUG=True) se puede simular con la env FAKE_TODAY=YYYY-MM-DD
+    para visualizar estados de vencimiento. En producción se ignora.
+    """
+    if settings.DEBUG:
+        fake = os.environ.get("FAKE_TODAY", "")
+        try:
+            return date.fromisoformat(fake)
+        except ValueError:
+            pass
+    return date.today()
 
 
 def calcular_estado_cliente(cliente, fecha_hoy=None):
+    """
+    Estados:
+      - inactivo: cliente desactivado manualmente.
+      - al_dia: sumó lo del plan en el mes actual, o es antes/igual del día 10 (gracia).
+      - deuda_parcial: pagó algo del mes pero menos que el precio del plan (después del 10).
+      - vencido: no pagó nada del mes actual (después del 10).
+      - pendiente_consulta: 2 meses desde el vencimiento, esperando decisión del dueño.
+    """
 
     if fecha_hoy is None:
-        fecha_hoy = date.today()
+        fecha_hoy = _fecha_hoy_dev()
 
     if not cliente.activo:
         return "inactivo"
 
-    mes_actual = fecha_hoy.replace(day=1)
+    pagado_mes, precio_plan = montos_del_mes(cliente, fecha_hoy)
 
-    tiene_pago_mes_actual = cliente.pagos.filter(mes_cubierto=mes_actual).exists()
-
-    if tiene_pago_mes_actual or fecha_hoy.day <= 10:
+    if pagado_mes >= precio_plan:
         return "al_dia"
+
+    if fecha_hoy.day <= 10:
+        return "al_dia"
+
+    if pagado_mes > 0:
+        return "deuda_parcial"
 
     ultimo_pago = cliente.pagos.order_by("-mes_cubierto").first()
 
@@ -32,6 +61,25 @@ def calcular_estado_cliente(cliente, fecha_hoy=None):
             return "pendiente_consulta"
 
     return "vencido"
+
+
+def montos_del_mes(cliente, fecha_hoy=None):
+    """
+    Devuelve (pagado, precio_plan) para el mes calendario de fecha_hoy.
+    Permite varios pagos por mes: se acumulan en 'pagado'.
+    """
+
+    if fecha_hoy is None:
+        fecha_hoy = _fecha_hoy_dev()
+
+    mes = fecha_hoy.replace(day=1)
+    pagado = (
+        cliente.pagos.filter(mes_cubierto=mes).aggregate(total=Sum("monto"))["total"]
+        or 0
+    )
+    precio = cliente.plan.precio if cliente.plan else 0
+
+    return pagado, precio
 
 
 #
@@ -74,3 +122,38 @@ def obtener_turno_actual():
 
     # Si no encontró , none
     return None
+
+
+#
+def clientes_no_al_dia(usuario):
+    """
+    Clientes activos que NO tienen completo el mes actual ('vencido' o 'deuda_parcial'),
+    según el rol. Dueño: todos los turnos. Profesor: solo su turno_asignado.
+    Adjunta estado_actual, mes_actual, pagado_mes_actual, precio_plan y monto_debido.
+    """
+
+    from apps.clientes.models import Cliente
+
+    fecha_hoy = _fecha_hoy_dev()
+    clientes_qs = Cliente.objects.filter(activo=True).select_related("turno", "plan")
+
+    if usuario.rol == "profesor":
+        if not usuario.turno_asignado:
+            return []
+        clientes_qs = clientes_qs.filter(turno=usuario.turno_asignado)
+
+    resultado = []
+    for cliente in clientes_qs:
+        estado = calcular_estado_cliente(cliente, fecha_hoy)
+        if estado not in ("vencido", "deuda_parcial"):
+            continue
+
+        pagado, precio = montos_del_mes(cliente, fecha_hoy)
+        cliente.estado_actual = estado
+        cliente.mes_actual = fecha_hoy.replace(day=1)
+        cliente.pagado_mes_actual = pagado
+        cliente.precio_plan = precio
+        cliente.monto_debido = max(precio - pagado, 0)
+        resultado.append(cliente)
+
+    return resultado
