@@ -1,0 +1,33 @@
+<div class="modal-content">
+    <div class="modal-header">
+        <h5 class="modal-title">
+            <span class="title-icon gray">
+                <i class="bi bi-three-dots"></i>
+            </span>
+            Acciones
+        </h5>
+        <button type="button" class="btn-close close-modal" aria-label="Cerrar"></button>
+    </div>
+    <div class="modal-body">
+        <p class="small text-muted mb-3">
+            <i class="bi bi-person me-1"></i>{{ cliente.apellido }}, {{ cliente.nombre }}
+        </p>
+        <div class="d-grid gap-2">
+            <button type="button" class="btn btn-outline-secondary text-start"
+                    hx-get="{% url 'modal_historial' cliente.id %}"
+                    hx-target="#modal-container">
+                <i class="bi bi-clock-history me-2"></i>Historial de pagos
+            </button>
+            <button type="button" class="btn btn-primary text-start"
+                    hx-get="{% url 'modal_pago' cliente.id %}"
+                    hx-target="#modal-container">
+                <i class="bi bi-cash-stack me-2"></i>Registrar pago
+            </button>
+            <button type="button" class="btn btn-outline-secondary text-start"
+                    hx-get="{% url 'editar_cliente' cliente.id %}"
+                    hx-target="#modal-container">
+                <i class="bi bi-pencil-square me-2"></i>Editar cliente
+            </button>
+        </div>
+    </div>
+</div>

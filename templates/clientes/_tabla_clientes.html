@@ -25,7 +25,7 @@
                 <th class="text-nowrap d-none d-md-table-cell">Plan</th>
                 <th class="text-nowrap d-none d-md-table-cell">Teléfono</th>
                 <th class="text-nowrap">Estado</th>
-                <th class="text-nowrap text-end">Acciones</th>
+                <th class="col-acciones text-nowrap text-end">Acciones</th>
             </tr>
         </thead>
         <tbody>
@@ -37,14 +37,14 @@
                 <td class="d-none d-md-table-cell text-nowrap">{{ cliente.telefono|default:"-" }}</td>
                 <td>
                     <span class="badge-status {{ cliente.estado_actual }}">
-                        {% if cliente.estado_actual == 'al_dia' %}<i class="bi bi-check-circle-fill"></i>Al día
-                        {% elif cliente.estado_actual == 'vencido' %}<i class="bi bi-x-circle-fill"></i>Vencido
-                        {% elif cliente.estado_actual == 'pendiente_consulta' %}<i class="bi bi-exclamation-triangle-fill"></i>Pendiente
-                        {% else %}<i class="bi bi-person-dash-fill"></i>Inactivo{% endif %}
+                        {% if cliente.estado_actual == 'al_dia' %}<i class="bi bi-check-circle-fill"></i><span class="d-none d-md-inline">Al día</span>
+                        {% elif cliente.estado_actual == 'vencido' %}<i class="bi bi-x-circle-fill"></i><span class="d-none d-md-inline">Vencido</span>
+                        {% elif cliente.estado_actual == 'pendiente_consulta' %}<i class="bi bi-exclamation-triangle-fill"></i><span class="d-none d-md-inline">Pendiente</span>
+                        {% else %}<i class="bi bi-person-dash-fill"></i><span class="d-none d-md-inline">Inactivo</span>{% endif %}
                     </span>
                 </td>
-                <td class="text-end">
-                    <div class="btn-group">
+                <td class="col-acciones text-end">
+                    <div class="btn-group d-none d-md-inline-flex">
                         <button class="btn btn-icon btn-outline-secondary"
                                 hx-get="{% url 'modal_historial' cliente.id %}"
                                 hx-target="#modal-container"
@@ -64,6 +64,12 @@
                             <i class="bi bi-pencil-square"></i>
                         </button>
                     </div>
+                    <button class="btn btn-icon btn-outline-secondary d-md-none"
+                            hx-get="{% url 'modal_acciones' cliente.id %}"
+                            hx-target="#modal-container"
+                            aria-label="Acciones">
+                        <i class="bi bi-three-dots-vertical"></i>
+                    </button>
                 </td>
             </tr>
             {% endfor %}

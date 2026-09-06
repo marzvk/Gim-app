@@ -108,6 +108,15 @@ def modal_historial_pagos(request, cliente_id):
 
 
 @login_required
+def modal_acciones_cliente(request, cliente_id):
+    """
+    Muestra el menú compacto de acciones de un cliente (mobile).
+    """
+    cliente = get_object_or_404(Cliente, id=cliente_id)
+    return render(request, "clientes/_modal_acciones.html", {"cliente": cliente})
+
+
+@login_required
 def crear_cliente(request):
     if request.method == "POST":
         form = ClienteForm(request.POST)

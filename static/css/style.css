@@ -172,6 +172,18 @@ body {
 [data-bs-theme="dark"] .table td { border-color: #1e293b; }
 .table-hover tbody tr:hover { background: rgba(37,99,235,0.03); }
 
+/* Sticky actions column: actions always visible on any screen width */
+/* Note: no z-index so open dropdown menus (z-index 1000) paint above other sticky cells */
+.col-acciones { position: sticky; right: 0; background: #f8fafc; box-shadow: -4px 0 8px -4px rgba(15,23,42,0.12); }
+.table thead .col-acciones { z-index: 1; }
+[data-bs-theme="dark"] .col-acciones { background: #0b1120; }
+.table-hover tbody tr:hover .col-acciones { background: #eef2f7; }
+[data-bs-theme="dark"] .table-hover tbody tr:hover .col-acciones { background: #132033; }
+
+@media (max-width: 575.98px) {
+    .table thead th, .table td { padding: 0.5rem 0.6rem; }
+}
+
 /* ── Status Badges ──────────────────────────────────────────────────── */
 .badge-status { font-size: 0.75rem; font-weight: 600; padding: 0.35em 0.7em; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.3rem; white-space: nowrap; }
 .badge-status.al_dia { background: #dcfce7; color: #15803d; }

@@ -8,6 +8,11 @@ urlpatterns = [
         views.modal_historial_pagos,
         name="modal_historial",
     ),
+    path(
+        "cliente/<int:cliente_id>/acciones/",
+        views.modal_acciones_cliente,
+        name="modal_acciones",
+    ),
     path("crear/", views.crear_cliente, name="crear_cliente"),
     path(
         "cliente/<int:cliente_id>/editar/", views.editar_cliente, name="editar_cliente"

@@ -225,3 +225,20 @@ class CrearClienteViewTestCase(BaseTestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertFalse(Cliente.objects.filter(nombre="").exists())
+
+
+@override_settings(AUTHENTICATION_BACKENDS=["django.contrib.auth.backends.ModelBackend"])
+class AccionesClienteViewTestCase(BaseTestCase):
+    """Tests para el menú de acciones del cliente (mobile)"""
+
+    def test_get_modal_acciones(self):
+        self.client.login(username="testuser", password="test123")
+        response = self.client.get(f"/cliente/{self.cliente.id}/acciones/")
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "clientes/_modal_acciones.html")
+        self.assertContains(response, self.cliente.apellido)
+
+    def test_sin_clientes_404(self):
+        self.client.login(username="testuser", password="test123")
+        response = self.client.get("/cliente/9999/acciones/")
+        self.assertEqual(response.status_code, 404)
