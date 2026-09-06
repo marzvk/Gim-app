@@ -53,7 +53,7 @@ Sistema web para la gestión de clientes, pagos y reportes de gimnasios. Desarro
 - Notificaciones tipo Toast para confirmaciones
 - Spinner de carga en requests
 - Dark mode toggle
-- Responsive para tablet y desktop
+- Responsive para móvil, tablet y desktop
 
 ---
 
@@ -106,7 +106,7 @@ Cuando un usuario tiene `rol="dueño"`, un signal de Django le asigna automátic
 
 ## Tests
 
-Suite de pruebas automatizadas (+50 tests) que garantizan la integridad de la lógica de negocio y flujos de usuario.
+Suite de pruebas automatizadas (67 tests) que garantizan la integridad de la lógica de negocio y flujos de usuario.
 
 ```bash
 make test
@@ -118,7 +118,7 @@ make test
 
 ## Roadmap
 
-- [ ] Reportes por mes con navegación histórica
+- [x] Reportes por mes con navegación histórica
 - [x] Panel propio para el dueño (sin Django admin)
 - [ ] Migración a PostgreSQL
 - [ ] Notificaciones de pagos vencidos
