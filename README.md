@@ -106,7 +106,7 @@ Cuando un usuario tiene `rol="dueño"`, un signal de Django le asigna automátic
 
 ## Tests
 
-Suite de pruebas automatizadas (67 tests) que garantizan la integridad de la lógica de negocio y flujos de usuario.
+Suite de pruebas automatizadas (101 tests) que garantizan la integridad de la lógica de negocio y flujos de usuario.
 
 ```bash
 make test
@@ -120,6 +120,4 @@ make test
 
 - [x] Reportes por mes con navegación histórica
 - [x] Panel propio para el dueño (sin Django admin)
-- [ ] Migración a PostgreSQL
-- [ ] Notificaciones de pagos vencidos
-- [ ] App mobile
+- [x] Notificaciones de pagos vencidos y parciales

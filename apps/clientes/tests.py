@@ -1,5 +1,6 @@
 from django.test import TestCase, override_settings
 from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
 from unittest.mock import patch
 from datetime import date
 import os
@@ -683,3 +684,69 @@ class RegistroPagoParcialViewTestCase(BaseTestCase):
         self.assertEqual(
             response.context["form"].initial["monto"], 15000
         )
+
+
+@override_settings(AUTHENTICATION_BACKENDS=["django.contrib.auth.backends.ModelBackend"])
+class ImportarXmlTestCase(BaseTestCase):
+    """Tests funcionales de importar_xml"""
+
+    def setUp(self):
+        super().setUp()
+        self.dueno = User.objects.create_user(
+            username="dueno", password="dueno123", rol="dueño"
+        )
+        self.client.login(username="dueno", password="dueno123")
+
+    def _post_xml(self, xml_bytes):
+        archivo = SimpleUploadedFile("backup.xml", xml_bytes, content_type="text/xml")
+        return self.client.post("/importar/xml/", {"archivo": archivo})
+
+    def test_importa_cliente_y_pago_nuevos(self):
+        xml = """<gimnasio>
+<clientes>
+  <cliente><id>1</id><nombre>Ana</nombre><apellido>Garcia</apellido>
+    <telefono>123</telefono><email>ana@test.com</email>
+    <plan>3_dias</plan><turno>Mañana</turno><activo>True</activo></cliente>
+</clientes>
+<pagos>
+  <pago><id>1</id><cliente_id>1</cliente_id><fecha_pago>2026-04-01</fecha_pago>
+    <mes_cubierto>2026-04-01</mes_cubierto><monto>35000</monto>
+    <observaciones></observaciones></pago>
+</pagos>
+</gimnasio>""".encode("utf-8")
+        response = self._post_xml(xml)
+        self.assertEqual(response.status_code, 200)
+        resultado = response.context["resultado"]
+        self.assertEqual(resultado["clientes_creados"], 1)
+        self.assertEqual(resultado["pagos_creados"], 1)
+        self.assertEqual(resultado["pagos_saltados"], 0)
+        self.assertTrue(
+            Pago.objects.filter(
+                cliente__apellido="Garcia",
+                mes_cubierto=date(2026, 4, 1),
+                monto=35000,
+            ).exists()
+        )
+
+    def test_pago_duplicado_dentro_del_mismo_archivo_se_salta(self):
+        xml = """<gimnasio>
+<clientes>
+  <cliente><id>1</id><nombre>Ana</nombre><apellido>Garcia</apellido>
+    <telefono>123</telefono><email>ana@test.com</email>
+    <plan>3_dias</plan><turno>Mañana</turno><activo>True</activo></cliente>
+</clientes>
+<pagos>
+  <pago><id>1</id><cliente_id>1</cliente_id><fecha_pago>2026-04-01</fecha_pago>
+    <mes_cubierto>2026-04-01</mes_cubierto><monto>35000</monto>
+    <observaciones></observaciones></pago>
+  <pago><id>2</id><cliente_id>1</cliente_id><fecha_pago>2026-04-01</fecha_pago>
+    <mes_cubierto>2026-04-01</mes_cubierto><monto>35000</monto>
+    <observaciones></observaciones></pago>
+</pagos>
+</gimnasio>""".encode("utf-8")
+        response = self._post_xml(xml)
+        self.assertEqual(response.status_code, 200)
+        resultado = response.context["resultado"]
+        self.assertEqual(resultado["clientes_creados"], 1)
+        self.assertEqual(resultado["pagos_creados"], 1)
+        self.assertEqual(resultado["pagos_saltados"], 1)

@@ -497,6 +497,7 @@ def importar_xml(request):
 
         mes_cubierto_str = p.findtext("mes_cubierto")
         fecha_pago_str = p.findtext("fecha_pago")
+        monto = p.findtext("monto")
 
         try:
             mes_cubierto = date.fromisoformat(mes_cubierto_str)
@@ -517,7 +518,7 @@ def importar_xml(request):
                 cliente=cliente,
                 fecha_pago=fecha_pago,
                 mes_cubierto=mes_cubierto,
-                monto=p.findtext("monto") or 0,
+                monto=monto or 0,
                 observaciones=p.findtext("observaciones") or "",
                 usuario_registrador=request.user,
             )
